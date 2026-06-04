@@ -11,8 +11,6 @@
     --teal: #1B7A7A;
     --teal-light: #2a9d9d;
     --teal-dim: rgba(27,122,122,0.15);
-    --tan: #A89070;
-    --burgundy: #2C1A2E;
     --bg: #0d0d0d;
     --surface: #161616;
     --surface2: #1f1f1f;
@@ -23,877 +21,327 @@
     --success: #27ae60;
     --gold: #c9a84c;
   }
-
   * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
 
-  body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    overflow-x: hidden;
-  }
-
-  /* ── Grain overlay ── */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
-    pointer-events: none;
-    z-index: 1000;
-    opacity: 0.4;
-  }
-
-  /* ── Auth screens ── */
+  /* ── Auth ── */
   #auth-screen {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
+    min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 2rem;
     background: radial-gradient(ellipse at 30% 20%, rgba(27,122,122,0.12) 0%, transparent 60%),
                 radial-gradient(ellipse at 80% 80%, rgba(44,26,46,0.4) 0%, transparent 60%);
   }
+  .auth-logo { text-align: center; margin-bottom: 2.5rem; }
+  .auth-logo .icon { font-size: 3rem; display: block; margin-bottom: 0.5rem; filter: drop-shadow(0 0 20px rgba(27,122,122,0.6)); }
+  .auth-logo h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 700; }
+  .auth-logo p { color: var(--teal); font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 0.3rem; }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; width: 100%; max-width: 380px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+  .auth-tabs { display: flex; margin-bottom: 1.5rem; background: var(--surface2); border-radius: 8px; padding: 3px; }
+  .auth-tab { flex: 1; padding: 0.5rem; border: none; background: transparent; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+  .auth-tab.active { background: var(--teal); color: white; }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label { display: block; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem; }
+  .form-group input { width: 100%; padding: 0.75rem 1rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none; transition: border-color 0.2s; }
+  .form-group input:focus { border-color: var(--teal); }
 
-  .auth-logo {
-    text-align: center;
-    margin-bottom: 2.5rem;
-  }
-
-  .auth-logo .icon {
-    font-size: 3rem;
-    display: block;
-    margin-bottom: 0.5rem;
-    filter: drop-shadow(0 0 20px rgba(27,122,122,0.6));
-  }
-
-  .auth-logo h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 2.2rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    color: var(--text);
-  }
-
-  .auth-logo p {
-    color: var(--teal);
-    font-size: 0.8rem;
-    letter-spacing: 0.15em;
-    text-transform: uppercase;
-    margin-top: 0.3rem;
-  }
-
-  .auth-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 2rem;
-    width: 100%;
-    max-width: 380px;
-    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-  }
-
-  .auth-tabs {
-    display: flex;
-    gap: 0;
-    margin-bottom: 1.5rem;
-    background: var(--surface2);
-    border-radius: 8px;
-    padding: 3px;
-  }
-
-  .auth-tab {
-    flex: 1;
-    padding: 0.5rem;
-    border: none;
-    background: transparent;
-    color: var(--text-dim);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.85rem;
-    cursor: pointer;
-    border-radius: 6px;
-    transition: all 0.2s;
-  }
-
-  .auth-tab.active {
-    background: var(--teal);
-    color: white;
-  }
-
-  .form-group {
-    margin-bottom: 1rem;
-  }
-
-  .form-group label {
-    display: block;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--text-dim);
-    margin-bottom: 0.4rem;
-  }
-
-  .form-group input {
-    width: 100%;
-    padding: 0.75rem 1rem;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    transition: border-color 0.2s;
-    outline: none;
-  }
-
-  .form-group input:focus {
-    border-color: var(--teal);
-  }
-
-  .btn {
-    width: 100%;
-    padding: 0.85rem;
-    border: none;
-    border-radius: 8px;
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.95rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s;
-    letter-spacing: 0.02em;
-  }
-
-  .btn-primary {
-    background: var(--teal);
-    color: white;
-  }
-
+  /* ── Buttons ── */
+  .btn { width: 100%; padding: 0.85rem; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.95rem; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+  .btn-primary { background: var(--teal); color: white; }
   .btn-primary:hover { background: var(--teal-light); transform: translateY(-1px); }
-  .btn-primary:active { transform: translateY(0); }
-
-  .btn-secondary {
-    background: var(--surface2);
-    color: var(--text);
-    border: 1px solid var(--border);
-  }
-
+  .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
   .btn-secondary:hover { border-color: var(--teal); }
-
-  .btn-danger {
-    background: rgba(192,57,43,0.15);
-    color: #e74c3c;
-    border: 1px solid rgba(192,57,43,0.3);
-  }
-
-  .btn-sm {
-    width: auto;
-    padding: 0.4rem 0.9rem;
-    font-size: 0.8rem;
-  }
-
-  .btn-ghost {
-    background: transparent;
-    color: var(--text-dim);
-    border: 1px solid var(--border);
-  }
-
+  .btn-danger { background: rgba(192,57,43,0.15); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); }
+  .btn-ghost { background: transparent; color: var(--text-dim); border: 1px solid var(--border); }
   .btn-ghost:hover { color: var(--text); border-color: var(--text-dim); }
+  .btn-sm { width: auto; padding: 0.4rem 0.9rem; font-size: 0.8rem; }
+  .btn-teal-outline { background: transparent; color: var(--teal-light); border: 1px solid rgba(27,122,122,0.4); width: auto; padding: 0.4rem 0.9rem; font-size: 0.8rem; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .btn-teal-outline:hover { background: var(--teal-dim); }
 
-  .msg {
-    padding: 0.6rem 0.8rem;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    margin-top: 0.75rem;
-    display: none;
-  }
-
+  .msg { padding: 0.6rem 0.8rem; border-radius: 6px; font-size: 0.85rem; margin-top: 0.75rem; display: none; }
   .msg.error { background: rgba(192,57,43,0.15); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); }
   .msg.success { background: rgba(39,174,96,0.15); color: #2ecc71; border: 1px solid rgba(39,174,96,0.3); }
   .msg.info { background: var(--teal-dim); color: var(--teal-light); border: 1px solid rgba(27,122,122,0.3); }
 
   /* ── App shell ── */
   #app { display: none; flex-direction: column; min-height: 100vh; }
-
-  .app-header {
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    padding: 0.85rem 1.25rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 100;
-  }
-
-  .app-header h1 {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.3rem;
-    color: var(--text);
-  }
-
-  .app-header .greeting {
-    font-size: 0.78rem;
-    color: var(--teal);
-    letter-spacing: 0.05em;
-  }
-
-  .logout-btn {
-    background: transparent;
-    border: 1px solid var(--border);
-    color: var(--text-dim);
-    padding: 0.3rem 0.7rem;
-    border-radius: 6px;
-    font-size: 0.75rem;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-  }
-
+  .app-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .app-header h1 { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
+  .app-header .greeting { font-size: 0.78rem; color: var(--teal); letter-spacing: 0.05em; }
+  .logout-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
   .logout-btn:hover { border-color: var(--danger); color: #e74c3c; }
 
   /* ── Bottom nav ── */
-  .bottom-nav {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: var(--surface);
-    border-top: 1px solid var(--border);
-    display: flex;
-    z-index: 100;
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-
-  .nav-item {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 0.6rem 0.5rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    border: none;
-    background: transparent;
-    color: var(--text-dim);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.65rem;
-    letter-spacing: 0.05em;
-    gap: 0.2rem;
-  }
-
+  .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: flex; z-index: 100; padding-bottom: env(safe-area-inset-bottom); }
+  .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 0.6rem 0.5rem; cursor: pointer; transition: all 0.2s; border: none; background: transparent; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 0.65rem; letter-spacing: 0.05em; gap: 0.2rem; }
   .nav-item .nav-icon { font-size: 1.3rem; line-height: 1; }
   .nav-item.active { color: var(--teal); }
-  .nav-item.active .nav-icon { filter: drop-shadow(0 0 6px rgba(27,122,122,0.6)); }
 
-  /* ── Page content ── */
-  .page-content {
-    flex: 1;
-    padding: 1rem 1rem 5.5rem;
-    max-width: 600px;
-    margin: 0 auto;
-    width: 100%;
-  }
-
+  /* ── Pages ── */
+  .page-content { flex: 1; padding: 1rem 1rem 5.5rem; max-width: 600px; margin: 0 auto; width: 100%; }
   .page { display: none; }
   .page.active { display: block; }
+  .section-title { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); margin-bottom: 0.75rem; }
 
-  .page-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.6rem;
-    margin-bottom: 1.25rem;
-    color: var(--text);
+  /* ── Dashboard ── */
+  .next-screening-card {
+    background: linear-gradient(135deg, rgba(27,122,122,0.2), rgba(27,122,122,0.05));
+    border: 1px solid rgba(27,122,122,0.3);
+    border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem; position: relative; overflow: hidden;
   }
+  .next-screening-card::before { content: ''; position: absolute; right: -20px; top: -20px; width: 120px; height: 120px; background: radial-gradient(circle, rgba(27,122,122,0.15), transparent 70%); }
+  .next-screening-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-light); margin-bottom: 0.4rem; }
+  .next-screening-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 0.3rem; }
+  .next-screening-date { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; }
+  .next-screening-meta { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+  .no-screening-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; margin-bottom: 1.5rem; text-align: center; }
+  .no-screening-card .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .no-screening-card p { color: var(--text-dim); font-size: 0.9rem; }
 
-  /* ── Movie cards ── */
-  .movie-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 0.75rem;
-    transition: border-color 0.2s;
+  /* ── Movie list (dashboard) ── */
+  .movie-row {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 10px;
+    padding: 0.75rem 1rem; margin-bottom: 0.5rem; display: flex;
+    align-items: center; gap: 0.75rem; cursor: pointer; transition: border-color 0.2s;
   }
+  .movie-row:hover { border-color: rgba(27,122,122,0.4); }
+  .movie-row-poster { width: 42px; height: 60px; border-radius: 5px; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
+  .movie-row-poster-placeholder { width: 42px; height: 60px; border-radius: 5px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .movie-row-info { flex: 1; min-width: 0; }
+  .movie-row-title { font-family: 'Playfair Display', serif; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .movie-row-actor { font-size: 0.75rem; color: var(--text-dim); margin-top: 0.15rem; }
+  .movie-row-scores { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; flex-shrink: 0; }
+  .community-avg { font-family: 'Playfair Display', serif; font-size: 1.1rem; color: var(--teal-light); }
+  .community-avg-label { font-size: 0.6rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.05em; }
+  .imdb-small { font-size: 0.7rem; color: var(--gold); }
 
-  .movie-card:hover { border-color: rgba(27,122,122,0.3); }
-
-  .movie-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.5rem;
-  }
-
-  .movie-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.3;
-    flex: 1;
-  }
-
-  .movie-actor {
-    font-size: 0.78rem;
-    color: var(--text-dim);
-    margin-bottom: 0.5rem;
-  }
-
-  .movie-meta {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.75rem;
-  }
-
-  .badge {
-    padding: 0.2rem 0.6rem;
-    border-radius: 20px;
-    font-size: 0.72rem;
-    font-weight: 500;
-    letter-spacing: 0.03em;
-  }
-
+  /* ── Movie detail ── */
+  #page-detail { display: none; }
+  .detail-back { display: flex; align-items: center; gap: 0.4rem; color: var(--teal-light); font-size: 0.85rem; cursor: pointer; margin-bottom: 1.25rem; background: none; border: none; font-family: 'DM Sans', sans-serif; padding: 0; }
+  .detail-hero { display: flex; gap: 1rem; margin-bottom: 1.25rem; }
+  .detail-poster { width: 100px; height: 148px; border-radius: 10px; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
+  .detail-poster-placeholder { width: 100px; height: 148px; border-radius: 10px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+  .detail-info { flex: 1; }
+  .detail-title { font-family: 'Playfair Display', serif; font-size: 1.3rem; line-height: 1.3; margin-bottom: 0.3rem; }
+  .detail-actor { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.6rem; }
+  .badge { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.72rem; font-weight: 500; }
   .badge-imdb { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
   .badge-rt { background: rgba(192,57,43,0.15); color: #e74c3c; border: 1px solid rgba(192,57,43,0.2); }
   .badge-stream { background: var(--teal-dim); color: var(--teal-light); border: 1px solid rgba(27,122,122,0.2); }
-  .badge-votes { background: rgba(255,255,255,0.05); color: var(--text-dim); border: 1px solid var(--border); }
+  .detail-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .detail-imdb-link { font-size: 0.75rem; color: var(--gold); text-decoration: none; }
+  .detail-streaming { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; line-height: 1.5; }
 
-  .community-score {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 0.75rem;
-  }
+  .community-score-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+  .score-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; }
+  .score-big { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--teal-light); line-height: 1; }
+  .score-meta { flex: 1; }
+  .score-meta-label { font-size: 0.72rem; color: var(--text-dim); }
+  .score-meta-votes { font-size: 0.8rem; color: var(--text-dim); }
+  .score-bar { height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; margin-top: 0.4rem; }
+  .score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--teal-light)); border-radius: 3px; transition: width 0.5s ease; }
 
-  .score-label { font-size: 0.72rem; color: var(--text-dim); }
-
-  .score-value {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.1rem;
-    color: var(--teal-light);
-    font-weight: 600;
-  }
-
-  .score-bar {
-    flex: 1;
-    height: 4px;
-    background: var(--surface2);
-    border-radius: 2px;
-    overflow: hidden;
-  }
-
-  .score-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--teal), var(--teal-light));
-    border-radius: 2px;
-    transition: width 0.5s ease;
-  }
-
-  /* ── Star voting ── */
-  .vote-section { margin-top: 0.5rem; }
-  .vote-label { font-size: 0.72rem; color: var(--text-dim); margin-bottom: 0.4rem; }
-
-  .number-vote {
-    display: flex;
-    gap: 0.3rem;
-    flex-wrap: wrap;
-  }
-
-  .vote-btn {
-    width: 32px;
-    height: 32px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: var(--surface2);
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'DM Sans', sans-serif;
-  }
-
+  .vote-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+  .vote-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.6rem; }
+  .number-vote { display: flex; gap: 0.3rem; flex-wrap: wrap; }
+  .vote-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim); font-size: 0.8rem; cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
   .vote-btn:hover { border-color: var(--teal); color: var(--teal-light); }
-  .vote-btn.selected { background: var(--teal); border-color: var(--teal); color: white; }
+  .vote-btn.selected { background: var(--teal); border-color: var(--teal); color: white; font-weight: 600; }
+  .vote-msg { font-size: 0.78rem; color: var(--teal-light); margin-top: 0.5rem; min-height: 1.2em; }
 
-  /* ── Add movie form ── */
-  .add-movie-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .section-title {
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 0.75rem;
-  }
-
-  .inline-form {
-    display: flex;
-    flex-direction: column;
-    gap: 0.6rem;
-  }
-
-  .inline-form input {
-    width: 100%;
-    padding: 0.65rem 0.9rem;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-
+  /* ── Add movie ── */
+  .add-movie-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; }
+  .inline-form { display: flex; flex-direction: column; gap: 0.6rem; }
+  .inline-form input { width: 100%; padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
   .inline-form input:focus { border-color: var(--teal); }
-
   .inline-form input::placeholder { color: var(--text-dim); }
 
   /* ── Screenings ── */
-  .screening-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-bottom: 0.75rem;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .screening-card::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 3px;
-    background: var(--teal);
-  }
-
-  .screening-date {
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    text-transform: uppercase;
-    color: var(--teal);
-    margin-bottom: 0.3rem;
-  }
-
-  .screening-title {
-    font-family: 'Playfair Display', serif;
-    font-size: 1.15rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .seats-info {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-  }
-
-  .seats-count {
-    font-size: 0.82rem;
-    color: var(--text-dim);
-  }
-
+  .screening-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem; margin-bottom: 0.75rem; position: relative; overflow: hidden; }
+  .screening-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--teal); }
+  .screening-hero { display: flex; gap: 1rem; margin-bottom: 0.75rem; }
+  .screening-poster { width: 60px; height: 88px; border-radius: 7px; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
+  .screening-poster-placeholder { width: 60px; height: 88px; border-radius: 7px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
+  .screening-info { flex: 1; }
+  .screening-date { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); margin-bottom: 0.3rem; }
+  .screening-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; margin-bottom: 0.5rem; }
+  .seats-info { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.75rem; }
+  .seats-count { font-size: 0.82rem; color: var(--text-dim); }
   .seats-count strong { color: var(--text); }
-
-  .seats-bar {
-    flex: 1;
-    height: 5px;
-    background: var(--surface2);
-    border-radius: 3px;
-    overflow: hidden;
-  }
-
-  .seats-bar-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--teal), var(--teal-light));
-    border-radius: 3px;
-    transition: width 0.4s;
-  }
-
+  .seats-bar { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .seats-bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--teal-light)); border-radius: 3px; transition: width 0.4s; }
   .seats-bar-fill.almost-full { background: linear-gradient(90deg, #e67e22, #f39c12); }
   .seats-bar-fill.full { background: linear-gradient(90deg, var(--danger), #e74c3c); }
-
   .booking-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
-
-  .status-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-    padding: 0.25rem 0.7rem;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 500;
-  }
-
+  .status-pill { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.25rem 0.7rem; border-radius: 20px; font-size: 0.75rem; font-weight: 500; }
   .pill-booked { background: rgba(39,174,96,0.15); color: #2ecc71; border: 1px solid rgba(39,174,96,0.3); }
   .pill-waitlist { background: rgba(230,126,34,0.15); color: #f39c12; border: 1px solid rgba(230,126,34,0.3); }
   .pill-full { background: rgba(192,57,43,0.1); color: #e74c3c; border: 1px solid rgba(192,57,43,0.2); }
 
   /* ── Admin ── */
-  .admin-section {
-    margin-bottom: 1.5rem;
-  }
-
-  .member-row {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 0.85rem 1rem;
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-  }
-
+  .admin-section { margin-bottom: 1.5rem; }
+  .member-row { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.5rem; display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; }
   .member-info { flex: 1; min-width: 0; }
   .member-name { font-size: 0.9rem; font-weight: 500; }
-  .member-email { font-size: 0.75rem; color: var(--text-dim); truncate: ellipsis; }
-
-  .member-status {
-    font-size: 0.7rem;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    font-weight: 500;
-  }
-
+  .member-email { font-size: 0.75rem; color: var(--text-dim); }
+  .member-status { font-size: 0.7rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 500; }
   .status-active { background: rgba(39,174,96,0.15); color: #2ecc71; }
   .status-pending { background: rgba(230,126,34,0.15); color: #f39c12; }
   .status-suspended { background: rgba(192,57,43,0.15); color: #e74c3c; }
-
   .member-actions { display: flex; gap: 0.4rem; }
-
-  /* ── Add screening form ── */
-  .add-screening-form {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1rem;
-    margin-bottom: 1.25rem;
-  }
-
-  .movie-select {
-    width: 100%;
-    padding: 0.65rem 0.9rem;
-    background: var(--surface2);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
-    margin-bottom: 0.6rem;
-    appearance: none;
-    cursor: pointer;
-  }
-
+  .add-screening-form { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1.25rem; }
+  .movie-select { width: 100%; padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0.6rem; appearance: none; cursor: pointer; }
   .movie-select:focus { border-color: var(--teal); }
-
   .form-row { display: flex; gap: 0.6rem; }
-  .form-row input { flex: 1; }
-
-  /* ── Loading ── */
-  .loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    gap: 0.5rem;
-  }
-
-  .spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid var(--border);
-    border-top-color: var(--teal);
-    border-radius: 50%;
-    animation: spin 0.7s linear infinite;
-  }
-
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--text-dim);
-  }
-
-  .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
-  .empty-state p { font-size: 0.9rem; line-height: 1.6; }
-
-  /* ── Search ── */
-  .search-bar {
-    width: 100%;
-    padding: 0.7rem 1rem;
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    color: var(--text);
-    font-family: 'DM Sans', sans-serif;
-    font-size: 0.9rem;
-    outline: none;
-    margin-bottom: 1rem;
-    transition: border-color 0.2s;
-  }
-
-  .search-bar:focus { border-color: var(--teal); }
-  .search-bar::placeholder { color: var(--text-dim); }
-
-  /* ── Sort bar ── */
-  .sort-bar {
-    display: flex;
-    gap: 0.4rem;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-  }
-
-  .sort-btn {
-    padding: 0.3rem 0.7rem;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-dim);
-    font-size: 0.75rem;
-    cursor: pointer;
-    font-family: 'DM Sans', sans-serif;
-    transition: all 0.2s;
-  }
-
-  .sort-btn.active { background: var(--teal-dim); color: var(--teal-light); border-color: rgba(27,122,122,0.4); }
-
-  /* ── Divider ── */
-  .divider {
-    height: 1px;
-    background: var(--border);
-    margin: 1.25rem 0;
-  }
-
-  /* ── Booking list (admin) ── */
-  .booking-list-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.6rem 0;
-    border-bottom: 1px solid var(--border);
-    font-size: 0.85rem;
-  }
-
+  .form-row input { flex: 1; padding: 0.65rem 0.9rem; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; }
+  .booking-list-item { display: flex; align-items: center; justify-content: space-between; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
   .booking-list-item:last-child { border-bottom: none; }
   .waitlist-pos { color: var(--teal); font-weight: 600; margin-right: 0.5rem; }
 
-  /* ── Animations ── */
-  @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(8px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  /* ── Search/sort ── */
+  .search-bar { width: 100%; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0.75rem; transition: border-color 0.2s; }
+  .search-bar:focus { border-color: var(--teal); }
+  .search-bar::placeholder { color: var(--text-dim); }
+  .sort-bar { display: flex; gap: 0.4rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .sort-btn { padding: 0.3rem 0.7rem; border-radius: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
+  .sort-btn.active { background: var(--teal-dim); color: var(--teal-light); border-color: rgba(27,122,122,0.4); }
 
-  .movie-card, .screening-card, .member-row {
-    animation: fadeIn 0.3s ease both;
-  }
-
-  /* ── Scrollbar ── */
+  /* ── Utils ── */
+  .loading { display: flex; align-items: center; justify-content: center; padding: 2rem; color: var(--text-dim); font-size: 0.85rem; gap: 0.5rem; }
+  .spinner { width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-dim); }
+  .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .empty-state p { font-size: 0.9rem; line-height: 1.6; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+  .movie-row, .screening-card, .member-row { animation: fadeIn 0.3s ease both; }
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-  @media (max-width: 400px) {
-    .number-vote { gap: 0.2rem; }
-    .vote-btn { width: 28px; height: 28px; font-size: 0.7rem; }
-  }
+  @media (max-width: 400px) { .number-vote { gap: 0.2rem; } .vote-btn { width: 30px; height: 30px; } }
 </style>
 </head>
 <body>
 
-<!-- ══ AUTH SCREEN ══════════════════════════════════════════ -->
+<!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-logo">
     <span class="icon">🎬</span>
     <h1>Element Movies</h1>
     <p>Fullerton Cove Community Cinema</p>
   </div>
-
   <div class="auth-card">
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchTab('login')">Sign In</button>
       <button class="auth-tab" onclick="switchTab('register')">Register</button>
     </div>
-
-    <!-- Login -->
     <div id="login-form">
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
-      </div>
-      <div class="form-group">
-        <label>PIN</label>
-        <input type="password" id="login-pin" placeholder="4-digit PIN" maxlength="4" inputmode="numeric">
-      </div>
+      <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="your@email.com" autocomplete="email"></div>
+      <div class="form-group"><label>PIN</label><input type="password" id="login-pin" placeholder="4-digit PIN" maxlength="4" inputmode="numeric"></div>
       <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
       <div id="login-msg" class="msg"></div>
     </div>
-
-    <!-- Register -->
     <div id="register-form" style="display:none">
-      <div class="form-group">
-        <label>Full Name</label>
-        <input type="text" id="reg-name" placeholder="Your name">
-      </div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="reg-email" placeholder="your@email.com">
-      </div>
-      <div class="form-group">
-        <label>Invite Code</label>
-        <input type="text" id="reg-token" placeholder="Provided by your host">
-      </div>
+      <div class="form-group"><label>Full Name</label><input type="text" id="reg-name" placeholder="Your name"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="reg-email" placeholder="your@email.com"></div>
+      <div class="form-group"><label>Invite Code</label><input type="text" id="reg-token" placeholder="Provided by your host"></div>
       <button class="btn btn-primary" onclick="doRegister()">Request Access</button>
       <div id="reg-msg" class="msg"></div>
     </div>
   </div>
 </div>
 
-<!-- ══ APP SHELL ════════════════════════════════════════════ -->
+<!-- APP -->
 <div id="app">
   <div class="app-header">
     <div>
       <div class="greeting" id="header-greeting">ELEMENT MOVIES</div>
-      <h1 id="header-page">Movies</h1>
+      <h1 id="header-page">Home</h1>
     </div>
     <button class="logout-btn" onclick="doLogout()">Sign out</button>
   </div>
 
   <div class="page-content">
 
-    <!-- Movies page -->
-    <div class="page active" id="page-movies">
-      <div class="add-movie-section">
-        <div class="section-title">✦ Suggest a movie</div>
-        <div class="inline-form">
-          <input type="text" id="add-title" placeholder="Movie title">
-          <input type="text" id="add-actor" placeholder="Lead actor">
-          <button class="btn btn-secondary" onclick="addMovie()" id="add-movie-btn">Add Movie</button>
-        </div>
-        <div id="add-movie-msg" class="msg"></div>
-      </div>
-
-      <input type="text" class="search-bar" id="movie-search" placeholder="🔍  Search movies..." oninput="filterMovies()">
-
+    <!-- HOME / DASHBOARD -->
+    <div class="page active" id="page-home">
+      <div id="next-screening-section"></div>
+      <div class="section-title" style="margin-top:0.5rem">✦ Movies — ranked by community</div>
+      <input type="text" class="search-bar" id="home-search" placeholder="🔍  Search movies..." oninput="renderHomeMovies()">
       <div class="sort-bar">
-        <button class="sort-btn active" onclick="sortMovies('score')" id="sort-score">Top Rated</button>
-        <button class="sort-btn" onclick="sortMovies('title')" id="sort-title">A–Z</button>
-        <button class="sort-btn" onclick="sortMovies('unvoted')" id="sort-unvoted">Not Voted</button>
+        <button class="sort-btn active" onclick="sortHome('score')" id="hsort-score">Community Score</button>
+        <button class="sort-btn" onclick="sortHome('imdb')" id="hsort-imdb">IMDB Rating</button>
+        <button class="sort-btn" onclick="sortHome('title')" id="hsort-title">A–Z</button>
       </div>
-
-      <div id="movies-list">
-        <div class="loading"><div class="spinner"></div> Loading movies…</div>
-      </div>
+      <div id="home-movies-list"><div class="loading"><div class="spinner"></div> Loading…</div></div>
     </div>
 
-    <!-- Screenings page -->
+    <!-- MOVIE DETAIL -->
+    <div class="page" id="page-detail">
+      <button class="detail-back" onclick="goBack()">← Back</button>
+      <div id="detail-content"></div>
+    </div>
+
+    <!-- SCREENINGS -->
     <div class="page" id="page-screenings">
-      <div id="screenings-list">
-        <div class="loading"><div class="spinner"></div> Loading screenings…</div>
-      </div>
+      <div id="screenings-list"><div class="loading"><div class="spinner"></div> Loading…</div></div>
     </div>
 
-    <!-- Admin page -->
+    <!-- ADMIN -->
     <div class="page" id="page-admin">
       <div class="admin-section">
         <div class="section-title">✦ Schedule a screening</div>
         <div class="add-screening-form">
-          <select class="movie-select" id="screening-movie-select">
-            <option value="">Select a movie…</option>
-          </select>
+          <select class="movie-select" id="screening-movie-select"><option value="">Select a movie…</option></select>
           <div class="form-row">
             <input type="date" id="screening-date" style="padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;flex:1;">
             <input type="time" id="screening-time" value="18:00" style="padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;flex:1;">
           </div>
-          <div style="margin-top:0.6rem">
-            <button class="btn btn-primary" onclick="addScreening()">Schedule Screening</button>
-          </div>
+          <div style="margin-top:0.6rem"><button class="btn btn-primary" onclick="addScreening()">Schedule Screening</button></div>
           <div id="add-screening-msg" class="msg"></div>
         </div>
       </div>
-
       <div class="admin-section">
         <div class="section-title">✦ Member approvals</div>
-        <div id="pending-members">
-          <div class="loading"><div class="spinner"></div> Loading…</div>
-        </div>
+        <div id="pending-members"><div class="loading"><div class="spinner"></div></div></div>
       </div>
-
       <div class="admin-section">
         <div class="section-title">✦ All members</div>
-        <div id="all-members">
-          <div class="loading"><div class="spinner"></div> Loading…</div>
-        </div>
+        <div id="all-members"><div class="loading"><div class="spinner"></div></div></div>
       </div>
-
-      <div class="admin-section" id="screening-headcounts">
+      <div class="admin-section">
         <div class="section-title">✦ Screening headcounts</div>
-        <div id="headcount-list">
-          <div class="loading"><div class="spinner"></div> Loading…</div>
-        </div>
+        <div id="headcount-list"><div class="loading"><div class="spinner"></div></div></div>
       </div>
     </div>
 
-  </div><!-- /page-content -->
+  </div>
 
-  <!-- Bottom nav -->
   <nav class="bottom-nav">
-    <button class="nav-item active" id="nav-movies" onclick="showPage('movies')">
-      <span class="nav-icon">🎬</span>Movies
-    </button>
-    <button class="nav-item" id="nav-screenings" onclick="showPage('screenings')">
-      <span class="nav-icon">🎟️</span>Screenings
-    </button>
-    <button class="nav-item" id="nav-admin" id="nav-admin" onclick="showPage('admin')" style="display:none">
-      <span class="nav-icon">⚙️</span>Admin
-    </button>
+    <button class="nav-item active" id="nav-home" onclick="showPage('home')"><span class="nav-icon">🏠</span>Home</button>
+    <button class="nav-item" id="nav-screenings" onclick="showPage('screenings')"><span class="nav-icon">🎟️</span>Screenings</button>
+    <button class="nav-item" id="nav-admin" onclick="showPage('admin')" style="display:none"><span class="nav-icon">⚙️</span>Admin</button>
   </nav>
 </div>
 
 <script>
-// ══ CONFIG ══════════════════════════════════════════════════
 const API = "https://script.google.com/macros/s/AKfycbwN5ABiNIn1snW3euBEBQWijW-DyQpV0KdEJsS6l9W5HOSD4fHEtdMBoM5yx7figEX7Bw/exec";
-
-// ══ STATE ═══════════════════════════════════════════════════
 let session = null;
 let allMovies = [];
-let currentSort = 'score';
+let allScreenings = [];
+let homeSort = 'score';
+let prevPage = 'home';
 
-// ══ API CALL ════════════════════════════════════════════════
 async function api(action, params = {}) {
   const body = { action, ...params };
   if (session?.member_id) body.member_id = session.member_id;
-  const res = await fetch(API, {
-    method: "POST",
-    body: JSON.stringify(body)
-  });
+  const res = await fetch(API, { method: "POST", body: JSON.stringify(body) });
   return res.json();
 }
 
-// ══ AUTH ════════════════════════════════════════════════════
+// ── AUTH ──
 function switchTab(tab) {
   document.getElementById('login-form').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('register-form').style.display = tab === 'register' ? 'block' : 'none';
-  document.querySelectorAll('.auth-tab').forEach((t, i) => {
-    t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register'));
-  });
+  document.querySelectorAll('.auth-tab').forEach((t, i) => t.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
 }
 
 async function doLogin() {
@@ -906,9 +354,7 @@ async function doLogin() {
     session = { member_id: res.member_id, name: res.name, is_admin: res.is_admin };
     localStorage.setItem('em_session', JSON.stringify(session));
     startApp();
-  } else {
-    showMsg(msg, res.error, 'error');
-  }
+  } else { showMsg(msg, res.error, 'error'); }
 }
 
 async function doRegister() {
@@ -918,11 +364,7 @@ async function doRegister() {
   const msg = document.getElementById('reg-msg');
   showMsg(msg, 'Submitting…', 'info');
   const res = await api('register', { name, email, token });
-  if (res.ok) {
-    showMsg(msg, res.message, 'success');
-  } else {
-    showMsg(msg, res.error, 'error');
-  }
+  showMsg(msg, res.ok ? res.message : res.error, res.ok ? 'success' : 'error');
 }
 
 function doLogout() {
@@ -932,118 +374,198 @@ function doLogout() {
   document.getElementById('auth-screen').style.display = 'flex';
 }
 
-// ══ APP START ═══════════════════════════════════════════════
 function startApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('header-greeting').textContent = `Welcome, ${session.name.split(' ')[0].toUpperCase()}`;
-
-  if (session.is_admin) {
-    document.getElementById('nav-admin').style.display = 'flex';
-  }
-
-  loadMovies();
+  if (session.is_admin) document.getElementById('nav-admin').style.display = 'flex';
+  loadHome();
 }
 
-// ══ NAVIGATION ══════════════════════════════════════════════
+// ── NAV ──
 function showPage(page) {
+  if (page !== 'detail') prevPage = document.querySelector('.page.active')?.id?.replace('page-', '') || 'home';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
-  document.getElementById(`nav-${page}`).classList.add('active');
-  const titles = { movies: 'Movies', screenings: 'Screenings', admin: 'Admin' };
-  document.getElementById('header-page').textContent = titles[page];
-
+  const navEl = document.getElementById(`nav-${page}`);
+  if (navEl) navEl.classList.add('active');
+  const titles = { home: 'Home', detail: '', screenings: 'Screenings', admin: 'Admin' };
+  document.getElementById('header-page').textContent = titles[page] || '';
   if (page === 'screenings') loadScreenings();
   if (page === 'admin') loadAdmin();
 }
 
-// ══ MOVIES ══════════════════════════════════════════════════
-async function loadMovies() {
-  const list = document.getElementById('movies-list');
-  list.innerHTML = '<div class="loading"><div class="spinner"></div> Loading movies…</div>';
-  const res = await api('getMovies');
-  if (!res.ok) { list.innerHTML = '<div class="empty-state"><p>Failed to load movies.</p></div>'; return; }
-  allMovies = res.movies;
-  renderMovies();
+function goBack() { showPage(prevPage); }
+
+// ── HOME ──
+async function loadHome() {
+  const [movRes, scrRes] = await Promise.all([api('getMovies'), api('getScreenings')]);
+  if (movRes.ok) allMovies = movRes.movies;
+  if (scrRes.ok) allScreenings = scrRes.screenings;
+  renderNextScreening();
+  renderHomeMovies();
 }
 
-function filterMovies() {
-  renderMovies();
-}
-
-function sortMovies(by) {
-  currentSort = by;
-  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-  document.getElementById(`sort-${by}`).classList.add('active');
-  renderMovies();
-}
-
-function renderMovies() {
-  const search = document.getElementById('movie-search').value.toLowerCase();
-  let movies = allMovies.filter(m =>
-    m.title.toLowerCase().includes(search) ||
-    (m.lead_actor || '').toLowerCase().includes(search)
-  );
-
-  if (currentSort === 'score') {
-    movies.sort((a, b) => {
-      if (!a.avg_score && !b.avg_score) return 0;
-      if (!a.avg_score) return 1;
-      if (!b.avg_score) return -1;
-      return b.avg_score - a.avg_score;
-    });
-  } else if (currentSort === 'title') {
-    movies.sort((a, b) => a.title.localeCompare(b.title));
-  } else if (currentSort === 'unvoted') {
-    movies = movies.filter(m => !m.my_score);
-  }
-
-  const list = document.getElementById('movies-list');
-  if (!movies.length) {
-    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🎬</div><p>No movies found.</p></div>';
+function renderNextScreening() {
+  const el = document.getElementById('next-screening-section');
+  const today = new Date().toISOString().split('T')[0];
+  const next = allScreenings.find(s => s.date >= today && s.status === 'scheduled');
+  
+  if (!next) {
+    el.innerHTML = `
+      <div class="no-screening-card">
+        <div class="icon">📅</div>
+        <p>No screenings scheduled yet.<br>Check back soon!</p>
+      </div>`;
     return;
   }
 
-  list.innerHTML = movies.map((m, i) => movieCardHTML(m, i)).join('');
+  const movie = allMovies.find(m => m.movie_id === next.movie_id) || {};
+  const dateStr = new Date(next.date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
+  const posterHTML = next.poster_url
+    ? `<img src="${movie.poster_url || ''}" style="width:70px;height:103px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
+    : '';
+
+  const myBooking = next.my_booking;
+  const seatsLeft = next.seats_left;
+  let actionHTML = '';
+  if (myBooking) {
+    actionHTML = `<span class="status-pill pill-booked" style="font-size:0.75rem">✓ You're booked</span>`;
+  } else if (next.my_waitlist) {
+    actionHTML = `<span class="status-pill pill-waitlist" style="font-size:0.75rem">⏳ Waitlist #${next.my_waitlist.position}</span>`;
+  } else if (seatsLeft === 0) {
+    actionHTML = `<button class="btn btn-secondary btn-sm" onclick="showPage('screenings')">Join Waitlist</button>`;
+  } else {
+    actionHTML = `<button class="btn btn-primary btn-sm" onclick="showPage('screenings')">Book a Seat — ${seatsLeft} left</button>`;
+  }
+
+  el.innerHTML = `
+    <div class="next-screening-card">
+      <div class="next-screening-label">🎬 Next Screening</div>
+      <div style="display:flex;gap:0.75rem;align-items:flex-start">
+        ${movie.poster_url ? `<img src="${movie.poster_url}" style="width:70px;height:103px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
+        <div>
+          <div class="next-screening-title">${next.movie_title}</div>
+          <div class="next-screening-date">${dateStr} · ${next.time}</div>
+          <div class="next-screening-meta">
+            ${next.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${next.movie_imdb_rating}</span>` : ''}
+            <span style="font-size:0.78rem;color:var(--text-dim)">${seatsLeft} seat${seatsLeft !== 1 ? 's' : ''} left</span>
+          </div>
+          ${actionHTML}
+        </div>
+      </div>
+    </div>`;
 }
 
-function movieCardHTML(m, i) {
+function sortHome(by) {
+  homeSort = by;
+  document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(`hsort-${by}`).classList.add('active');
+  renderHomeMovies();
+}
+
+function renderHomeMovies() {
+  const search = (document.getElementById('home-search')?.value || '').toLowerCase();
+  let movies = allMovies.filter(m =>
+    m.title.toLowerCase().includes(search) || (m.lead_actor || '').toLowerCase().includes(search)
+  );
+
+  if (homeSort === 'score') {
+    movies.sort((a, b) => {
+      if (!a.avg_score && !b.avg_score) return (parseFloat(b.imdb_rating) || 0) - (parseFloat(a.imdb_rating) || 0);
+      if (!a.avg_score) return 1;
+      if (!b.avg_score) return -1;
+      return parseFloat(b.avg_score) - parseFloat(a.avg_score);
+    });
+  } else if (homeSort === 'imdb') {
+    movies.sort((a, b) => (parseFloat(b.imdb_rating) || 0) - (parseFloat(a.imdb_rating) || 0));
+  } else {
+    movies.sort((a, b) => a.title.localeCompare(b.title));
+  }
+
+  const list = document.getElementById('home-movies-list');
+  if (!movies.length) { list.innerHTML = '<div class="empty-state"><p>No movies found.</p></div>'; return; }
+
+  list.innerHTML = movies.map((m, i) => {
+    const poster = m.poster_url
+      ? `<img class="movie-row-poster" src="${m.poster_url}" onerror="this.outerHTML='<div class=movie-row-poster-placeholder>🎬</div>'">`
+      : `<div class="movie-row-poster-placeholder">🎬</div>`;
+
+    return `
+    <div class="movie-row" style="animation-delay:${i * 0.03}s" onclick="showDetail('${m.movie_id}')">
+      ${poster}
+      <div class="movie-row-info">
+        <div class="movie-row-title">${m.title}</div>
+        <div class="movie-row-actor">${m.lead_actor || ''}</div>
+      </div>
+      <div class="movie-row-scores">
+        ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+        ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DETAIL ──
+function showDetail(movie_id) {
+  const m = allMovies.find(x => x.movie_id === movie_id);
+  if (!m) return;
+  prevPage = document.querySelector('.page.active')?.id?.replace('page-', '') || 'home';
+
+  const poster = m.poster_url
+    ? `<img class="detail-poster" src="${m.poster_url}" onerror="this.outerHTML='<div class=detail-poster-placeholder>🎬</div>'">`
+    : `<div class="detail-poster-placeholder">🎬</div>`;
+
   const score = m.avg_score ? parseFloat(m.avg_score) : 0;
   const pct = (score / 10 * 100).toFixed(0);
   const myScore = m.my_score;
 
   const voteBtns = [1,2,3,4,5,6,7,8,9,10].map(n =>
-    `<button class="vote-btn ${myScore === n ? 'selected' : ''}" onclick="castVote('${m.movie_id}', ${n})">${n}</button>`
+    `<button class="vote-btn ${myScore === n ? 'selected' : ''}" onclick="castVote('${m.movie_id}', ${n}, this)">${n}</button>`
   ).join('');
 
-  return `
-  <div class="movie-card" style="animation-delay:${i * 0.05}s">
-    <div class="movie-header">
-      <div class="movie-title">${m.title}</div>
-      ${m.imdb_url ? `<a href="${m.imdb_url}" target="_blank" style="font-size:0.7rem;color:var(--gold);text-decoration:none;white-space:nowrap">IMDB ↗</a>` : ''}
+  document.getElementById('detail-content').innerHTML = `
+    <div class="detail-hero">
+      ${poster}
+      <div class="detail-info">
+        <div class="detail-title">${m.title}</div>
+        <div class="detail-actor">${m.lead_actor || ''}</div>
+        <div class="detail-badges">
+          ${m.imdb_rating ? `<span class="badge badge-imdb">⭐ ${m.imdb_rating} IMDB</span>` : ''}
+          ${m.rt_score ? `<span class="badge badge-rt">🍅 ${m.rt_score} RT</span>` : ''}
+        </div>
+        ${m.imdb_url ? `<a href="${m.imdb_url}" target="_blank" class="detail-imdb-link">View on IMDB ↗</a>` : ''}
+        ${m.streaming_au ? `<div class="detail-streaming">▶ ${m.streaming_au}</div>` : ''}
+      </div>
     </div>
-    <div class="movie-actor">${m.lead_actor || ''}</div>
-    <div class="movie-meta">
-      ${m.imdb_rating ? `<span class="badge badge-imdb">⭐ ${m.imdb_rating}</span>` : ''}
-      ${m.rt_score ? `<span class="badge badge-rt">🍅 ${m.rt_score}</span>` : ''}
-      ${m.streaming_au ? `<span class="badge badge-stream">▶ ${m.streaming_au.replace('Stream: ','').split(',')[0]}</span>` : ''}
-      <span class="badge badge-votes">${m.vote_count} vote${m.vote_count !== 1 ? 's' : ''}</span>
+
+    <div class="community-score-block">
+      <div class="section-title">Community Score</div>
+      <div class="score-row">
+        <div class="score-big">${score > 0 ? m.avg_score : '—'}</div>
+        <div class="score-meta">
+          <div class="score-meta-label">out of 10</div>
+          <div class="score-meta-votes">${m.vote_count} vote${m.vote_count !== 1 ? 's' : ''}</div>
+        </div>
+      </div>
+      ${score > 0 ? `<div class="score-bar"><div class="score-bar-fill" style="width:${pct}%"></div></div>` : ''}
     </div>
-    ${score > 0 ? `
-    <div class="community-score">
-      <span class="score-label">Community</span>
-      <span class="score-value">${m.avg_score}</span>
-      <div class="score-bar"><div class="score-bar-fill" style="width:${pct}%"></div></div>
-    </div>` : ''}
-    <div class="vote-section">
-      <div class="vote-label">${myScore ? `Your score: ${myScore}/10 — update?` : 'Rate this movie:'}</div>
-      <div class="number-vote">${voteBtns}</div>
-    </div>
-  </div>`;
+
+    <div class="vote-block">
+      <div class="section-title">Your Rating</div>
+      <div class="vote-label">${myScore ? `You rated this ${myScore}/10 — tap to change` : 'Tap a score to rate this movie'}</div>
+      <div class="number-vote" id="vote-btns-${m.movie_id}">${voteBtns}</div>
+      <div class="vote-msg" id="vote-msg-${m.movie_id}"></div>
+    </div>`;
+
+  document.getElementById('header-page').textContent = m.title.length > 20 ? m.title.substring(0, 18) + '…' : m.title;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-detail').classList.add('active');
 }
 
-async function castVote(movie_id, score) {
+async function castVote(movie_id, score, btn) {
   const res = await api('vote', { movie_id, score });
   if (res.ok) {
     const movie = allMovies.find(m => m.movie_id === movie_id);
@@ -1052,84 +574,78 @@ async function castVote(movie_id, score) {
       const oldCount = movie.vote_count || 0;
       const oldTotal = (movie.avg_score ? parseFloat(movie.avg_score) : 0) * oldCount;
       if (wasVoted) {
-        const newTotal = oldTotal - movie.my_score + score;
-        movie.avg_score = (newTotal / oldCount).toFixed(1);
+        movie.avg_score = ((oldTotal - movie.my_score + score) / oldCount).toFixed(1);
       } else {
         movie.avg_score = ((oldTotal + score) / (oldCount + 1)).toFixed(1);
         movie.vote_count = oldCount + 1;
       }
       movie.my_score = score;
-      renderMovies();
     }
+    // Update vote buttons
+    const container = document.getElementById(`vote-btns-${movie_id}`);
+    if (container) {
+      container.querySelectorAll('.vote-btn').forEach((b, i) => b.classList.toggle('selected', i + 1 === score));
+    }
+    const msgEl = document.getElementById(`vote-msg-${movie_id}`);
+    if (msgEl) msgEl.textContent = `✓ Rated ${score}/10`;
+    // Refresh score display without leaving page
+    const scoreEl = document.querySelector('.score-big');
+    if (scoreEl && movie) scoreEl.textContent = movie.avg_score || '—';
   }
 }
 
-async function addMovie() {
-  const title = document.getElementById('add-title').value.trim();
-  const lead_actor = document.getElementById('add-actor').value.trim();
-  const msg = document.getElementById('add-movie-msg');
-  if (!title || !lead_actor) { showMsg(msg, 'Title and actor required', 'error'); return; }
-  const btn = document.getElementById('add-movie-btn');
-  btn.textContent = 'Adding…';
-  btn.disabled = true;
-  showMsg(msg, 'Fetching ratings and streaming info…', 'info');
-  const res = await api('addMovie', { title, lead_actor });
-  btn.textContent = 'Add Movie';
-  btn.disabled = false;
-  if (res.ok) {
-    document.getElementById('add-title').value = '';
-    document.getElementById('add-actor').value = '';
-    showMsg(msg, `Added! IMDB: ${res.imdb_rating || 'N/A'} | RT: ${res.rt_score || 'N/A'} | ${res.streaming_au || ''}`, 'success');
-    loadMovies();
-  } else {
-    showMsg(msg, res.error, 'error');
-  }
-}
-
-// ══ SCREENINGS ══════════════════════════════════════════════
+// ── SCREENINGS ──
 async function loadScreenings() {
   const list = document.getElementById('screenings-list');
-  list.innerHTML = '<div class="loading"><div class="spinner"></div> Loading screenings…</div>';
+  list.innerHTML = '<div class="loading"><div class="spinner"></div> Loading…</div>';
   const res = await api('getScreenings');
   if (!res.ok) { list.innerHTML = '<div class="empty-state"><p>Failed to load.</p></div>'; return; }
 
-  if (!res.screenings.length) {
+  const today = new Date().toISOString().split('T')[0];
+  const future = res.screenings.filter(s => s.date >= today);
+
+  if (!future.length) {
     list.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>No upcoming screenings.<br>Check back soon!</p></div>';
     return;
   }
 
-  list.innerHTML = res.screenings.map((s, i) => screeningCardHTML(s, i)).join('');
+  list.innerHTML = future.map((s, i) => screeningCardHTML(s, i)).join('');
 }
 
 function screeningCardHTML(s, i) {
   const pct = ((s.seats_taken / s.max_seats) * 100).toFixed(0);
   const fillClass = pct >= 100 ? 'full' : pct >= 75 ? 'almost-full' : '';
   const dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const movie = allMovies.find(m => m.movie_id === s.movie_id) || {};
+  const poster = movie.poster_url
+    ? `<img class="screening-poster" src="${movie.poster_url}" onerror="this.outerHTML='<div class=screening-poster-placeholder>🎬</div>'">`
+    : `<div class="screening-poster-placeholder">🎬</div>`;
 
   let actionHTML = '';
   if (s.my_booking) {
-    actionHTML = `
-      <span class="status-pill pill-booked">✓ Booked</span>
-      <button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Cancel</button>`;
+    actionHTML = `<span class="status-pill pill-booked">✓ Booked</span><button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Cancel</button>`;
   } else if (s.my_waitlist) {
-    actionHTML = `<span class="status-pill pill-waitlist">⏳ Waitlist #${s.my_waitlist.position}</span>
-      <button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Leave waitlist</button>`;
+    actionHTML = `<span class="status-pill pill-waitlist">⏳ Waitlist #${s.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Leave</button>`;
   } else if (s.seats_left === 0) {
-    actionHTML = `<span class="status-pill pill-full">Full</span>
-      <button class="btn btn-secondary btn-sm" onclick="bookSeat('${s.screening_id}')">Join Waitlist</button>`;
+    actionHTML = `<span class="status-pill pill-full">Full</span><button class="btn btn-secondary btn-sm" onclick="bookSeat('${s.screening_id}')">Join Waitlist</button>`;
   } else {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="bookSeat('${s.screening_id}')">Book Seat</button>`;
   }
 
   return `
   <div class="screening-card" style="animation-delay:${i * 0.08}s">
-    <div class="screening-date">🎬 ${dateStr} · ${s.time}</div>
-    <div class="screening-title">${s.movie_title}</div>
+    <div class="screening-hero">
+      ${poster}
+      <div class="screening-info">
+        <div class="screening-date">${dateStr} · ${s.time}</div>
+        <div class="screening-title">${s.movie_title}</div>
+        ${s.movie_imdb_rating ? `<div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.4rem">⭐ ${s.movie_imdb_rating} IMDB</div>` : ''}
+      </div>
+    </div>
     <div class="seats-info">
-      <div class="seats-count"><strong>${s.seats_left}</strong> of ${s.max_seats} seats left${s.on_waitlist > 0 ? ` · ${s.on_waitlist} on waitlist` : ''}</div>
+      <div class="seats-count"><strong>${s.seats_left}</strong> of ${s.max_seats} seats left${s.on_waitlist > 0 ? ` · ${s.on_waitlist} waitlisted` : ''}</div>
       <div class="seats-bar"><div class="seats-bar-fill ${fillClass}" style="width:${pct}%"></div></div>
     </div>
-    ${s.movie_imdb_rating ? `<div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem">⭐ ${s.movie_imdb_rating} IMDB</div>` : ''}
     <div class="booking-actions">${actionHTML}</div>
   </div>`;
 }
@@ -1137,13 +653,9 @@ function screeningCardHTML(s, i) {
 async function bookSeat(screening_id) {
   const res = await api('book', { screening_id });
   if (res.ok) {
-    if (res.status === 'waitlisted') {
-      alert(`Screening is full — you've been added to the waitlist at position ${res.position}. You'll be emailed if a seat opens up.`);
-    }
+    if (res.status === 'waitlisted') alert(`Screening is full — you've been added to the waitlist at position ${res.position}. You'll be emailed if a seat opens up.`);
     loadScreenings();
-  } else {
-    alert(res.error);
-  }
+  } else alert(res.error);
 }
 
 async function cancelBooking(screening_id) {
@@ -1153,7 +665,7 @@ async function cancelBooking(screening_id) {
   else alert(res.error);
 }
 
-// ══ ADMIN ════════════════════════════════════════════════════
+// ── ADMIN ──
 async function loadAdmin() {
   if (!session.is_admin) return;
   loadMembers();
@@ -1172,42 +684,29 @@ async function loadMoviesForSelect() {
 async function loadMembers() {
   const res = await api('getMembers');
   if (!res.ok) return;
-
   const pending = res.members.filter(m => m.status === 'pending');
-  const all = res.members;
 
-  const pendingEl = document.getElementById('pending-members');
-  if (!pending.length) {
-    pendingEl.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim);padding:0.5rem 0">No pending approvals.</div>';
-  } else {
-    pendingEl.innerHTML = pending.map(m => `
-      <div class="member-row">
-        <div class="member-info">
-          <div class="member-name">${m.name}</div>
-          <div class="member-email">${m.email}</div>
-        </div>
-        <div class="member-actions">
-          <button class="btn btn-primary btn-sm" onclick="approveMember('${m.member_id}')">Approve</button>
-          <button class="btn btn-danger btn-sm" onclick="rejectMember('${m.member_id}')">Reject</button>
-        </div>
-      </div>`).join('');
-  }
+  document.getElementById('pending-members').innerHTML = pending.length
+    ? pending.map(m => `
+        <div class="member-row">
+          <div class="member-info"><div class="member-name">${m.name}</div><div class="member-email">${m.email}</div></div>
+          <div class="member-actions">
+            <button class="btn btn-primary btn-sm" onclick="approveMember('${m.member_id}')">Approve</button>
+            <button class="btn btn-danger btn-sm" onclick="rejectMember('${m.member_id}')">Reject</button>
+          </div>
+        </div>`).join('')
+    : '<div style="font-size:0.85rem;color:var(--text-dim);padding:0.5rem 0">No pending approvals.</div>';
 
-  const allEl = document.getElementById('all-members');
-  allEl.innerHTML = all.map(m => `
+  document.getElementById('all-members').innerHTML = res.members.map(m => `
     <div class="member-row">
-      <div class="member-info">
-        <div class="member-name">${m.name}</div>
-        <div class="member-email">${m.email}</div>
-      </div>
+      <div class="member-info"><div class="member-name">${m.name}</div><div class="member-email">${m.email}</div></div>
       <span class="member-status status-${m.status}">${m.status}</span>
     </div>`).join('');
 }
 
 async function approveMember(target_member_id) {
   const res = await api('approveMember', { target_member_id });
-  if (res.ok) { loadMembers(); }
-  else alert(res.error);
+  if (res.ok) loadMembers(); else alert(res.error);
 }
 
 async function rejectMember(target_member_id) {
@@ -1223,81 +722,59 @@ async function addScreening() {
   const msg = document.getElementById('add-screening-msg');
   if (!movie_id || !date || !time) { showMsg(msg, 'Please fill all fields', 'error'); return; }
   const res = await api('addScreening', { movie_id, date, time, max_seats: 20 });
-  if (res.ok) {
-    showMsg(msg, 'Screening scheduled!', 'success');
-    loadHeadcounts();
-  } else {
-    showMsg(msg, res.error, 'error');
-  }
+  if (res.ok) { showMsg(msg, 'Screening scheduled!', 'success'); loadHeadcounts(); loadHome(); }
+  else showMsg(msg, res.error, 'error');
 }
 
 async function loadHeadcounts() {
-  const screenRes = await api('getScreenings');
-  if (!screenRes.ok) return;
+  const res = await api('getScreenings');
+  if (!res.ok) return;
   const list = document.getElementById('headcount-list');
-  if (!screenRes.screenings.length) {
-    list.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">No upcoming screenings.</div>';
-    return;
-  }
-  list.innerHTML = screenRes.screenings.map(s => `
+  if (!res.screenings.length) { list.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">No upcoming screenings.</div>'; return; }
+  list.innerHTML = res.screenings.map(s => `
     <div class="screening-card" style="margin-bottom:0.75rem">
       <div class="screening-date">${s.date} · ${s.time}</div>
       <div class="screening-title" style="font-size:1rem;margin-bottom:0.5rem">${s.movie_title}</div>
-      <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.75rem">
-        ${s.seats_taken}/${s.max_seats} booked · ${s.on_waitlist} waitlisted
+      <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:0.75rem">${s.seats_taken}/${s.max_seats} booked · ${s.on_waitlist} waitlisted</div>
+      <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="showBookingList('${s.screening_id}', this)">View guest list</button>
+        <button class="btn btn-danger btn-sm" onclick="cancelScreening('${s.screening_id}')">Cancel screening</button>
       </div>
-      <button class="btn btn-ghost btn-sm" onclick="showBookingList('${s.screening_id}', '${s.movie_title}')">View guest list</button>
-      <button class="btn btn-danger btn-sm" onclick="cancelScreening('${s.screening_id}')">Cancel screening</button>
       <div id="guestlist-${s.screening_id}" style="margin-top:0.75rem;display:none"></div>
     </div>`).join('');
 }
 
-async function showBookingList(screening_id, title) {
+async function showBookingList(screening_id, btn) {
   const el = document.getElementById(`guestlist-${screening_id}`);
-  if (el.style.display !== 'none') { el.style.display = 'none'; return; }
+  if (el.style.display !== 'none') { el.style.display = 'none'; btn.textContent = 'View guest list'; return; }
   el.style.display = 'block';
+  btn.textContent = 'Hide guest list';
   el.innerHTML = '<div class="loading"><div class="spinner"></div></div>';
-  const [bookRes, wlRes] = await Promise.all([
-    api('getBookings', { screening_id }),
-    api('getWaitlist', { screening_id })
-  ]);
+  const [bookRes, wlRes] = await Promise.all([api('getBookings', { screening_id }), api('getWaitlist', { screening_id })]);
   let html = '';
   if (bookRes.ok && bookRes.bookings.length) {
-    html += bookRes.bookings.map((b, i) =>
-      `<div class="booking-list-item"><span>${i+1}. ${b.name}</span><span style="color:var(--success);font-size:0.75rem">✓ Booked</span></div>`
-    ).join('');
+    html += bookRes.bookings.map((b, i) => `<div class="booking-list-item"><span>${i+1}. ${b.name}</span><span style="color:var(--success);font-size:0.75rem">✓ Booked</span></div>`).join('');
   }
   if (wlRes.ok && wlRes.waitlist.length) {
-    html += '<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.5rem;margin-bottom:0.25rem;letter-spacing:0.08em;text-transform:uppercase">Waitlist</div>';
-    html += wlRes.waitlist.map(w =>
-      `<div class="booking-list-item"><span><span class="waitlist-pos">#${w.position}</span>${w.name}</span><span style="color:var(--gold);font-size:0.75rem">Waiting</span></div>`
-    ).join('');
+    html += '<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.5rem;margin-bottom:0.25rem;text-transform:uppercase;letter-spacing:0.08em">Waitlist</div>';
+    html += wlRes.waitlist.map(w => `<div class="booking-list-item"><span><span class="waitlist-pos">#${w.position}</span>${w.name}</span><span style="color:var(--gold);font-size:0.75rem">Waiting</span></div>`).join('');
   }
-  if (!html) html = '<div style="font-size:0.85rem;color:var(--text-dim)">No bookings yet.</div>';
-  el.innerHTML = html;
+  el.innerHTML = html || '<div style="font-size:0.85rem;color:var(--text-dim)">No bookings yet.</div>';
 }
 
 async function cancelScreening(screening_id) {
   if (!confirm('Cancel this screening? All members will be notified by email.')) return;
   const res = await api('cancelScreening', { screening_id });
-  if (res.ok) loadHeadcounts();
-  else alert(res.error);
+  if (res.ok) loadHeadcounts(); else alert(res.error);
 }
 
-// ══ UTILS ═══════════════════════════════════════════════════
-function showMsg(el, text, type) {
-  el.textContent = text;
-  el.className = `msg ${type}`;
-  el.style.display = 'block';
-}
+// ── UTILS ──
+function showMsg(el, text, type) { el.textContent = text; el.className = `msg ${type}`; el.style.display = 'block'; }
 
-// ══ INIT ════════════════════════════════════════════════════
+// ── INIT ──
 (function init() {
   const saved = localStorage.getItem('em_session');
-  if (saved) {
-    session = JSON.parse(saved);
-    startApp();
-  }
+  if (saved) { session = JSON.parse(saved); startApp(); }
 })();
 </script>
 </body>
