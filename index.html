@@ -464,19 +464,29 @@ function renderNextScreening() {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="showPage('screenings')">Book — ${seatsLeft} seat${seatsLeft!==1?'s':''} left</button>`;
   }
 
+  const communityScore = movie.avg_score ? `<span style="font-size:0.82rem;color:var(--teal-light);font-family:'Playfair Display',serif">${movie.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10 community</span></span>` : '';
+
   el.innerHTML = `
     <div class="next-screening-card">
       <div class="next-screening-label">🎬 Next Screening</div>
-      <div style="display:flex;gap:0.75rem;align-items:flex-start">
+      <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:1rem">
         ${movie.poster_url ? `<img src="${movie.poster_url}" style="width:70px;height:103px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
-        <div>
+        <div style="flex:1">
           <div class="next-screening-title">${next.movie_title}</div>
           <div class="next-screening-date">${dateStr} · ${next.time}</div>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.75rem">
-            ${next.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${next.movie_imdb_rating}</span>` : ''}
-            <span style="font-size:0.78rem;color:var(--text-dim)">${seatsLeft} seat${seatsLeft!==1?'s':''} left</span>
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.6rem">
+            ${next.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${next.movie_imdb_rating} IMDB</span>` : ''}
+            ${communityScore}
           </div>
-          ${actionHTML}
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.6rem">
+            <span style="font-size:0.78rem;color:var(--text-dim)">${seatsLeft} seat${seatsLeft!==1?'s':''} left</span>
+            ${movie.streaming_au ? `<span style="font-size:0.75rem;color:var(--teal-light)">▶ ${movie.streaming_au.replace('Stream: ','').split(',')[0]}</span>` : ''}
+          </div>
+          ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank" style="font-size:0.75rem;color:var(--gold);text-decoration:none;display:block;margin-bottom:0.75rem">View on IMDB ↗</a>` : ''}
+          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
+            ${actionHTML}
+            <button class="btn btn-ghost btn-sm" onclick="showPage('screenings')" style="font-size:0.8rem">Manage booking →</button>
+          </div>
         </div>
       </div>
     </div>`;
