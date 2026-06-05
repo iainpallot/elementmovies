@@ -294,8 +294,7 @@
     <!-- HOME -->
     <div class="page active" id="page-home">
       <div id="next-screening-section"></div>
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.5rem;margin-bottom:0.75rem">
-        <div class="section-title" style="margin-bottom:0">✦ Movies — tap to view & vote</div>
+      <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:0.5rem;margin-bottom:0.75rem">
         <button onclick="toggleSuggestForm()" id="suggest-toggle-btn" style="background:var(--teal);border:none;color:white;padding:0.35rem 0.8rem;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;white-space:nowrap">+ Suggest</button>
       </div>
 
@@ -328,6 +327,7 @@
         <button class="sort-btn" onclick="sortHome('imdb')" id="hsort-imdb">IMDB Rating</button>
         <button class="sort-btn" onclick="sortHome('title')" id="hsort-title">A–Z</button>
       </div>
+      <div class="section-title" style="margin-bottom:0.75rem">✦ Movies — tap to view & vote</div>
       <div id="home-movies-list"><div class="inline-loading"><div class="spinner"></div> Loading movies…</div></div>
     </div>
 
