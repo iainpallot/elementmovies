@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Element Movies</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
@@ -20,7 +20,8 @@
     --text-dim: rgba(240,236,230,0.5); --danger: #c0392b; --success: #27ae60; --gold: #c9a84c;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  html { overflow-x: hidden; max-width: 100vw; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; max-width: 100vw; width: 100%; }
 
   /* ── Loading overlay ── */
   #global-loader {
@@ -41,9 +42,9 @@
   .auth-logo .icon { font-size: 3rem; display: block; margin-bottom: 0.5rem; filter: drop-shadow(0 0 20px rgba(27,122,122,0.6)); }
   .auth-logo h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; font-weight: 700; }
   .auth-logo p { color: var(--teal); font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 0.3rem; }
-  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 2rem; width: 100%; max-width: 380px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+  .auth-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; width: 100%; max-width: 380px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
   .auth-tabs { display: flex; margin-bottom: 1.5rem; background: var(--surface2); border-radius: 8px; padding: 3px; }
-  .auth-tab { flex: 1; padding: 0.5rem; border: none; background: transparent; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 0.85rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; }
+  .auth-tab { flex: 1; padding: 0.4rem 0.2rem; border: none; background: transparent; color: var(--text-dim); font-family: 'DM Sans', sans-serif; font-size: 0.75rem; cursor: pointer; border-radius: 6px; transition: all 0.2s; text-align: center; }
   .auth-tab.active { background: var(--teal); color: white; }
   .form-group { margin-bottom: 1rem; }
   .form-group label { display: block; font-size: 0.75rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 0.4rem; }
@@ -82,13 +83,13 @@
   .nav-item.active { color: var(--teal); }
 
   /* ── Pages ── */
-  .page-content { flex: 1; padding: 1rem 1rem 5.5rem; max-width: 600px; margin: 0 auto; width: 100%; }
+  .page-content { flex: 1; padding: 1rem 0.75rem 5.5rem; max-width: 600px; margin: 0 auto; width: 100%; min-width: 0; }
   .page { display: none; }
   .page.active { display: block; }
   .section-title { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); margin-bottom: 0.75rem; }
 
   /* ── Dashboard ── */
-  .next-screening-card { background: linear-gradient(135deg, rgba(27,122,122,0.2), rgba(27,122,122,0.05)); border: 1px solid rgba(27,122,122,0.3); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; }
+  .next-screening-card { background: linear-gradient(135deg, rgba(27,122,122,0.2), rgba(27,122,122,0.05)); border: 1px solid rgba(27,122,122,0.3); border-radius: 14px; padding: 1.25rem; margin-bottom: 1.5rem; position: relative; overflow: hidden; width: 100%; }
   .next-screening-label { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--teal-light); margin-bottom: 0.4rem; }
   .next-screening-title { font-family: 'Playfair Display', serif; font-size: 1.4rem; margin-bottom: 0.3rem; }
   .next-screening-date { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 1rem; }
