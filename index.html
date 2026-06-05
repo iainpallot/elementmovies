@@ -16,6 +16,8 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icon-16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/icon-180.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png">
+<link rel="shortcut icon" href="/favicon.ico" type="image/x-icon">
+<link rel="mask-icon" href="/icon-192.png" color="#1B7A7A">
 <style>
   :root {
     --teal: #1B7A7A; --teal-light: #2a9d9d; --teal-dim: rgba(27,122,122,0.15);
@@ -708,18 +710,22 @@ function renderHomeMovies() {
     const poster = m.poster_url
       ? `<img class="movie-row-poster" src="${m.poster_url}" onerror="this.outerHTML='<div class=movie-row-poster-placeholder>🎬</div>'">`
       : `<div class="movie-row-poster-placeholder">🎬</div>`;
+    const isAdmin = session && session.is_admin;
     return `
-    <div class="movie-row${isScreened?' screened':''}" style="animation-delay:${i*0.03}s" onclick="showDetail('${m.movie_id}')">
-      ${poster}
-      <div class="movie-row-info">
-        <div class="movie-row-title">${m.title}</div>
-        <div class="movie-row-actor">${m.lead_actor||''}</div>
-        ${isScreened ? '<div class="movie-row-tag">Screened</div>' : ''}
+    <div class="movie-row${isScreened?' screened':''}" style="animation-delay:${i*0.03}s">
+      <div onclick="showDetail('${m.movie_id}')" style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:0">
+        ${poster}
+        <div class="movie-row-info">
+          <div class="movie-row-title">${m.title}</div>
+          <div class="movie-row-actor">${m.lead_actor||''}</div>
+          ${isScreened ? '<div class="movie-row-tag">Screened</div>' : ''}
+        </div>
+        <div class="movie-row-scores">
+          ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
+        </div>
       </div>
-      <div class="movie-row-scores">
-        ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
-        ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
-      </div>
+      ${isAdmin ? `<button onclick="removeMovie('${m.movie_id}','${m.title.replace(/'/g,'\'')}')" style="background:transparent;border:none;color:var(--text-dim);font-size:1.1rem;cursor:pointer;padding:0.25rem 0.25rem 0.25rem 0.5rem;flex-shrink:0;line-height:1" title="Remove movie">🗑</button>` : ''}
     </div>`;
   };
 
@@ -1059,7 +1065,7 @@ async function loadStreamingList() {
   el.innerHTML = movies.sort((a,b) => a.title.localeCompare(b.title)).map(m => `
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.6rem 0;border-bottom:1px solid var(--border);gap:0.75rem">
       <div style="font-size:0.85rem;font-family:'Playfair Display',serif;flex:1">${m.title}</div>
-      <div style="font-size:0.75rem;color:var(--teal-light);text-align:right;max-width:55%">${m.streaming_au}</div>
+      <div style="font-size:0.75rem;color:var(--teal-light);text-align:right;max-width:55%">${formatStreaming(m.streaming_au)}</div>
     </div>`).join('');
 }
 
@@ -1077,14 +1083,61 @@ async function loadMembers() {
   el.innerHTML = '<div class="inline-loading"><div class="spinner"></div></div>';
   const res = await api('getMembers');
   if (!res.ok) { el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to load members.</div>'; return; }
-  el.innerHTML = res.members.map(m => `
+
+  const active = res.members.filter(m => m.status === 'active' || m.status === 'TRUE');
+  const inactive = res.members.filter(m => m.status === 'suspended' || m.status === 'inactive');
+
+  const memberRow = (m) => `
     <div class="member-row">
       <div class="member-info">
         <div class="member-name">${m.name}</div>
-        <div class="member-email" style="font-size:0.75rem;color:var(--text-dim)">${m.username || ''}</div>
+        <div style="font-size:0.75rem;color:var(--text-dim)">${m.username || ''}</div>
       </div>
-      <span class="member-status status-${m.status}">${m.status}</span>
-    </div>`).join('');
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.75rem;color:var(--text-dim)">
+          <div onclick="toggleMemberStatus('${m.member_id}','${m.status}')"
+            style="width:36px;height:20px;border-radius:10px;background:${m.status==='active'?'var(--teal)':'var(--surface2)'};border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s">
+            <div style="width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:1px;${m.status==='active'?'right:1px':'left:1px'};transition:all 0.2s"></div>
+          </div>
+          ${m.status==='active'?'Active':'Inactive'}
+        </label>
+      </div>
+    </div>`;
+
+  let html = active.map(memberRow).join('');
+
+  if (inactive.length) {
+    html += `
+    <div style="margin-top:0.75rem">
+      <div onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none';this.querySelector('.acc-arrow').style.transform=this.nextElementSibling.style.display==='block'?'rotate(90deg)':''"
+        style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-top:1px solid var(--border);cursor:pointer;font-size:0.78rem;color:var(--text-dim)">
+        <span>Inactive members (${inactive.length})</span>
+        <span class="acc-arrow" style="transition:transform 0.2s">›</span>
+      </div>
+      <div style="display:none">${inactive.map(memberRow).join('')}</div>
+    </div>`;
+  }
+
+  el.innerHTML = html;
+}
+
+async function toggleMemberStatus(member_id, currentStatus) {
+  const newStatus = currentStatus === 'active' ? 'suspended' : 'active';
+  const action = newStatus === 'active' ? 'approveMember' : 'rejectMember';
+  const res = await api(action, { target_member_id: member_id });
+  if (res.ok) loadMembers();
+  else alert(res.error);
+}
+
+async function removeMovie(movie_id, title) {
+  if (!confirm(`Remove "${title}" from the library? This cannot be undone.`)) return;
+  showLoader('Removing movie…');
+  const res = await api('removeMovie', { movie_id });
+  hideLoader();
+  if (res.ok) {
+    allMovies = allMovies.filter(m => m.movie_id !== movie_id);
+    renderHomeMovies();
+  } else alert(res.error);
 }
 
 async function approveMember(id) { const r = await api('approveMember',{target_member_id:id}); if(r.ok) loadMembers(); else alert(r.error); }
@@ -1334,6 +1387,14 @@ async function submitScreening() {
 }
 
 // ── UTILS ──
+function formatStreaming(val) {
+  if (!val) return '';
+  if (val.startsWith('Stream: ')) return val.replace('Stream: ', '');
+  if (val.startsWith('Rent/Buy:') || val.includes('Rent/Buy')) return '$$$';
+  if (val === 'Not available AU') return '$$$';
+  return val;
+}
+
 function formatRT(val) {
   if (!val) return '';
   const n = parseFloat(val);
