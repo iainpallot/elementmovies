@@ -461,9 +461,14 @@ function showPage(page) {
   if (page === 'admin') loadAdmin();
 }
 
-function goBack() { 
+async function goBack() {
   showPage(prevPage);
-  if (prevPage === 'home') renderHomeMovies();
+  if (prevPage === 'home') {
+    const res = await api('getMovies');
+    if (res.ok) allMovies = res.movies;
+    renderHomeMovies();
+    renderNextScreening();
+  }
 }
 
 // ── HOME ──
