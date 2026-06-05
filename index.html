@@ -788,6 +788,15 @@ async function loadScreenings() {
     list.innerHTML = '<div class="empty-state"><div class="empty-icon">📅</div><p>No upcoming screenings.<br>Check back soon!</p></div>';
     return;
   }
+
+  // Fetch attendees for each screening
+  const attendeeResults = await Promise.all(
+    future.map(s => api('getAttendees', { screening_id: s.screening_id }))
+  );
+  future.forEach((s, i) => {
+    s.attendees = attendeeResults[i].ok ? attendeeResults[i].attendees : [];
+  });
+
   list.innerHTML = future.map((s,i) => screeningCardHTML(s,i)).join('');
 }
 
@@ -835,6 +844,15 @@ function screeningCardHTML(s, i) {
     </div>
     <div class="booking-actions" id="booking-actions-${s.screening_id}">${actionHTML}</div>
     <div id="seat-picker-${s.screening_id}" style="display:none"></div>
+    ${s.attendees && s.attendees.length ? `
+    <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">
+      <div style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem">
+        Attending (${s.seats_taken} seat${s.seats_taken!==1?'s':''})
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+        ${s.attendees.map(a => `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:0.2rem 0.6rem;font-size:0.75rem;color:var(--text)">${a.name}${a.seats>1?' ×'+a.seats:''}</span>`).join('')}
+      </div>
+    </div>` : ''}
   </div>`;
 }
 
