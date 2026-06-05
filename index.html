@@ -216,6 +216,21 @@
   .movie-row, .screening-card, .member-row { animation: fadeIn 0.3s ease both; }
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── Mobile overflow fix ── */
+  @media (max-width: 600px) {
+    html { overflow-x: clip !important; }
+    body { overflow-x: clip !important; width: 100vw !important; }
+    .page-content { padding-left: 0.75rem !important; padding-right: 0.75rem !important; width: 100vw !important; max-width: 100vw !important; }
+    .app-header { width: 100vw !important; padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
+    .bottom-nav { width: 100vw !important; }
+    .movie-row { width: calc(100vw - 1.5rem) !important; }
+    .screening-card { width: calc(100vw - 1.5rem) !important; }
+    .next-screening-card { width: calc(100vw - 1.5rem) !important; }
+    .search-bar { width: calc(100vw - 1.5rem) !important; }
+    .sort-bar { width: calc(100vw - 1.5rem) !important; }
+    #suggest-form { width: calc(100vw - 1.5rem) !important; }
+  }
   @media (max-width: 400px) { .number-vote { gap: 0.2rem; } .vote-btn { width: 30px; height: 30px; } }
 
   .divider-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0.75rem 0 0.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
