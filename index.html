@@ -319,7 +319,13 @@
 
     <!-- HOME -->
     <div class="page active" id="page-library">
-      <div id="next-screening-section"></div>
+      <div style="background:var(--surface);border:1px solid rgba(27,122,122,0.25);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.25rem">
+        <p style="font-size:0.88rem;color:var(--text-dim);line-height:1.65">
+          This is the community movie library — films suggested by residents for future screenings.
+          <span style="color:var(--text)"> Score each movie to have your say.</span>
+          The higher the community vote, the more likely it is to make the big screen! 🎬
+        </p>
+      </div>
 
 
       <div id="suggest-form" style="display:none;background:var(--surface);border:1px solid rgba(27,122,122,0.3);border-radius:12px;padding:1rem;margin-bottom:1rem">
@@ -607,7 +613,6 @@ async function loadLibrary() {
   hideLoader();
   if (movRes.ok) allMovies = movRes.movies;
   if (scrRes.ok) allScreenings = scrRes.screenings;
-  renderNextScreening();
   renderHomeMovies();
 }
 
