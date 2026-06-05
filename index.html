@@ -303,6 +303,17 @@
     <!-- ADMIN -->
     <div class="page" id="page-admin">
       <div class="admin-section">
+        <div class="section-title">✦ Invite code</div>
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1rem">
+          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Members need this code to register. Change it anytime to stop new registrations.</div>
+          <div style="display:flex;gap:0.6rem;align-items:center">
+            <input type="text" id="invite-code-input" placeholder="Loading…" style="flex:1;padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;letter-spacing:0.05em;outline:none">
+            <button class="btn btn-primary btn-sm" onclick="saveInviteCode()" style="white-space:nowrap">Save</button>
+          </div>
+          <div id="invite-code-msg" class="msg"></div>
+        </div>
+      </div>
+      <div class="admin-section">
         <div class="section-title">✦ Schedule a screening</div>
         <div class="add-screening-form">
           <select class="movie-select" id="screening-movie-select"><option value="">Select a movie…</option></select>
@@ -803,6 +814,23 @@ async function loadAdmin() {
   loadHeadcounts();
   loadMoviesForSelect();
   loadStreamingList();
+  loadInviteCode();
+}
+
+async function loadInviteCode() {
+  const res = await api('getInviteCode');
+  if (res.ok) document.getElementById('invite-code-input').value = res.code;
+}
+
+async function saveInviteCode() {
+  const code = document.getElementById('invite-code-input').value.trim();
+  const msg = document.getElementById('invite-code-msg');
+  if (!code) { showMsg(msg, 'Code cannot be empty', 'error'); return; }
+  if (code.length < 4) { showMsg(msg, 'Code must be at least 4 characters', 'error'); return; }
+  showLoader('Saving invite code…');
+  const res = await api('setInviteCode', { code });
+  hideLoader();
+  showMsg(msg, res.ok ? '✓ Invite code updated' : res.error, res.ok ? 'success' : 'error');
 }
 
 async function loadStreamingList() {
