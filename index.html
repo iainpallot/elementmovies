@@ -504,13 +504,14 @@ function renderNextScreening() {
 
   let actionHTML = '';
   if (next.my_booking) {
-    actionHTML = `<span class="status-pill pill-booked" style="font-size:0.75rem">✓ You're booked (${next.my_booking.seats || 1} seat${(next.my_booking.seats||1)>1?'s':''})</span>`;
+    const bs = next.my_booking.seats || 1;
+    actionHTML = `<div style="display:flex;align-items:center;gap:0.5rem"><span class="status-pill pill-booked" style="font-size:0.75rem">✓ Booked ${bs} seat${bs>1?'s':''}</span><button class="btn btn-ghost btn-sm" onclick="showPage('screenings')" style="font-size:0.75rem;padding:0.25rem 0.6rem">Manage →</button></div>`;
   } else if (next.my_waitlist) {
-    actionHTML = `<span class="status-pill pill-waitlist">⏳ Waitlist #${next.my_waitlist.position}</span>`;
+    actionHTML = `<div style="display:flex;align-items:center;gap:0.5rem"><span class="status-pill pill-waitlist">⏳ Waitlist #${next.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="showPage('screenings')" style="font-size:0.75rem;padding:0.25rem 0.6rem">Manage →</button></div>`;
   } else if (seatsLeft === 0) {
     actionHTML = `<button class="btn btn-secondary btn-sm" onclick="showPage('screenings')">Join Waitlist</button>`;
   } else {
-    actionHTML = `<button class="btn btn-primary btn-sm" onclick="showPage('screenings')">Book — ${seatsLeft} seat${seatsLeft!==1?'s':''} left</button>`;
+    actionHTML = `<button class="btn btn-primary btn-sm" onclick="showPage('screenings')">Book a Seat</button>`;
   }
 
   const communityScore = movie.avg_score ? `<span style="font-size:0.82rem;color:var(--teal-light);font-family:'Playfair Display',serif">${movie.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10 community</span></span>` : '';
@@ -518,24 +519,16 @@ function renderNextScreening() {
   el.innerHTML = `
     <div class="next-screening-card">
       <div class="next-screening-label">🎬 Next Screening</div>
-      <div style="display:flex;gap:0.75rem;align-items:flex-start;margin-bottom:1rem">
-        ${movie.poster_url ? `<img src="${movie.poster_url}" style="width:70px;height:103px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
-        <div style="flex:1">
-          <div class="next-screening-title">${next.movie_title}</div>
-          <div class="next-screening-date">${dateStr} · ${next.time}</div>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.6rem">
-            ${next.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${next.movie_imdb_rating} IMDB</span>` : ''}
+      <div style="display:flex;gap:0.75rem;align-items:flex-start">
+        ${movie.poster_url ? `<img src="${movie.poster_url}" style="width:65px;height:96px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">` : ''}
+        <div style="flex:1;min-width:0">
+          <div class="next-screening-title" style="font-size:1.15rem;margin-bottom:0.2rem">${next.movie_title}</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.35rem">${dateStr} · ${next.time} <span style="color:var(--teal-light);font-weight:600;margin-left:0.4rem">${seatsLeft} seat${seatsLeft!==1?'s':''} left</span></div>
+          <div style="display:flex;gap:0.4rem;align-items:center;margin-bottom:0.6rem;flex-wrap:wrap">
+            ${next.movie_imdb_rating && movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank" class="badge badge-imdb" style="text-decoration:none">⭐ ${next.movie_imdb_rating} IMDB</a>` : next.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${next.movie_imdb_rating}</span>` : ''}
             ${communityScore}
           </div>
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.6rem">
-            <span style="font-size:0.78rem;color:var(--text-dim)">${seatsLeft} seat${seatsLeft!==1?'s':''} left</span>
-            ${movie.streaming_au ? `<span style="font-size:0.75rem;color:var(--teal-light)">▶ ${movie.streaming_au.replace('Stream: ','').split(',')[0]}</span>` : ''}
-          </div>
-          ${movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank" style="font-size:0.75rem;color:var(--gold);text-decoration:none;display:block;margin-bottom:0.75rem">View on IMDB ↗</a>` : ''}
-          <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center">
-            ${actionHTML}
-            <button class="btn btn-ghost btn-sm" onclick="showPage('screenings')" style="font-size:0.8rem">Manage booking →</button>
-          </div>
+          ${actionHTML}
         </div>
       </div>
     </div>`;
@@ -729,11 +722,10 @@ function screeningCardHTML(s, i) {
       <div style="flex:1">
         <div class="screening-date">${dateStr} · ${s.time}</div>
         <div class="screening-title">${s.movie_title}</div>
-        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;margin-bottom:0.4rem">
-          ${s.movie_imdb_rating?`<span class="badge badge-imdb">⭐ ${s.movie_imdb_rating}</span>`:''}
+        <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;margin-bottom:0.4rem">
+          ${s.movie_imdb_rating && movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank" class="badge badge-imdb" style="text-decoration:none">⭐ ${s.movie_imdb_rating} IMDB</a>` : s.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${s.movie_imdb_rating}</span>` : ''}
           ${communityScr}
         </div>
-        ${movie.imdb_url?`<a href="${movie.imdb_url}" target="_blank" style="font-size:0.72rem;color:var(--gold);text-decoration:none">IMDB ↗</a>`:''}
       </div>
     </div>
     <div class="seats-info">
