@@ -71,7 +71,7 @@
 
   /* ── App shell ── */
   #app { display: none; flex-direction: column; min-height: 100vh; }
-  .app-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.85rem 1.25rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; }
+  .app-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0.75rem 1rem; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 100; width: 100%; overflow: hidden; }
   .app-header h1 { font-family: 'Playfair Display', serif; font-size: 1.3rem; }
   .app-header .greeting { font-size: 0.78rem; color: var(--teal); letter-spacing: 0.05em; }
   .logout-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); padding: 0.3rem 0.7rem; border-radius: 6px; font-size: 0.75rem; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
@@ -199,7 +199,7 @@
   .waitlist-pos { color: var(--teal); font-weight: 600; margin-right: 0.5rem; }
 
   /* ── Search/sort ── */
-  .search-bar { width: 100%; padding: 0.7rem 1rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.9rem; outline: none; margin-bottom: 0.75rem; transition: border-color 0.2s; }
+  .search-bar { width: 100%; padding: 0.65rem 0.75rem; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.88rem; outline: none; margin-bottom: 0.75rem; transition: border-color 0.2s; display: block; }
   .search-bar:focus { border-color: var(--teal); }
   .search-bar::placeholder { color: var(--text-dim); }
   .sort-bar { display: flex; gap: 0.3rem; margin-bottom: 1rem; flex-wrap: nowrap; width: 100%; }
@@ -295,8 +295,9 @@
     <!-- HOME -->
     <div class="page active" id="page-home">
       <div id="next-screening-section"></div>
-      <div style="display:flex;align-items:center;justify-content:flex-end;margin-top:0.5rem;margin-bottom:0.75rem">
-        <button onclick="toggleSuggestForm()" id="suggest-toggle-btn" style="background:var(--teal);border:none;color:white;padding:0.35rem 0.8rem;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:0.78rem;cursor:pointer;white-space:nowrap">+ Suggest</button>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:0.5rem;margin-bottom:0.75rem;width:100%;overflow:hidden">
+        <div class="section-title" style="margin-bottom:0;font-size:0.68rem">✦ MOVIES — TAP TO VIEW & VOTE</div>
+        <button onclick="toggleSuggestForm()" id="suggest-toggle-btn" style="background:var(--teal);border:none;color:white;padding:0.3rem 0.7rem;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:0.75rem;cursor:pointer;white-space:nowrap;flex-shrink:0;margin-left:0.5rem">+ Suggest</button>
       </div>
 
       <div id="suggest-form" style="display:none;background:var(--surface);border:1px solid rgba(27,122,122,0.3);border-radius:12px;padding:1rem;margin-bottom:1rem">
@@ -328,7 +329,7 @@
         <button class="sort-btn" onclick="sortHome('imdb')" id="hsort-imdb">IMDB Rating</button>
         <button class="sort-btn" onclick="sortHome('title')" id="hsort-title">A–Z</button>
       </div>
-      <div class="section-title" style="margin-bottom:0.75rem">✦ Movies — tap to view & vote</div>
+
       <div id="home-movies-list"><div class="inline-loading"><div class="spinner"></div> Loading movies…</div></div>
     </div>
 
