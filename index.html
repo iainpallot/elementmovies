@@ -291,8 +291,9 @@
 
       <div id="suggest-form" style="display:none;background:var(--surface);border:1px solid rgba(27,122,122,0.3);border-radius:12px;padding:1rem;margin-bottom:1rem">
         <div class="section-title">✦ Suggest a movie</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.6rem">Tip: check the correct spelling first if unsure — e.g. "Forrest Gump" not "Forest Gump"</div>
         <div style="position:relative;margin-bottom:0.6rem">
-          <input type="text" id="add-title" placeholder="Start typing a movie title…" autocomplete="off"
+          <input type="text" id="add-title" placeholder="Type movie title (spelling matters!)" autocomplete="off"
             style="width:100%;padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none"
             oninput="searchMovieLive(this.value)">
           <div id="movie-search-results" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1px solid rgba(27,122,122,0.4);border-radius:8px;z-index:200;margin-top:4px;max-height:280px;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,0.5)"></div>
