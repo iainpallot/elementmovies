@@ -552,10 +552,18 @@ function showPage(page) {
 async function goBack() {
   showPage(prevPage);
   if (prevPage === 'home') {
-    const res = await api('getMovies');
-    if (res.ok) allMovies = res.movies;
+    // Use local allMovies (already updated by castVote) — don't re-fetch
+    // which would overwrite the local update before the server has committed
     renderHomeMovies();
     renderNextScreening();
+    // Then silently refresh in background after a delay
+    setTimeout(async () => {
+      const res = await api('getMovies');
+      if (res.ok) {
+        allMovies = res.movies;
+        renderHomeMovies();
+      }
+    }, 2000);
   }
 }
 
