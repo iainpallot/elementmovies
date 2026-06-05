@@ -992,7 +992,9 @@ async function addMovie() {
   if (res.ok) {
     document.getElementById('add-title').value = '';
     document.getElementById('add-actor').value = '';
-    showMsg(msg, `✓ Added! IMDB: ${res.imdb_rating||'N/A'} · RT: ${res.rt_score||'N/A'} · ${res.streaming_au||''}`, 'success');
+    const addedTitle = res.title || title;
+    const titleNote = addedTitle.toLowerCase() !== title.toLowerCase() ? ` (saved as "${addedTitle}")` : '';
+    showMsg(msg, `✓ Added${titleNote}! IMDB: ${res.imdb_rating||'N/A'} · RT: ${res.rt_score||'N/A'}`, 'success');
     await loadHome();
     toggleSuggestForm();
   } else {
