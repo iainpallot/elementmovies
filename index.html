@@ -509,9 +509,12 @@ function switchTab(tab) {
 async function doLogin() {
   const username = document.getElementById('login-username').value.trim();
   const password = document.getElementById('login-password').value.trim();
-  const msg = document.getElementById('login-msg');
-  if (!username || !password) { showMsg(msg, 'Username and password required', 'error'); return; }
-  showMsg(msg, 'Signing in…', 'info');
+  const errDiv = document.getElementById('login-error');
+  if (errDiv) errDiv.style.display = 'none';
+  if (!username || !password) {
+    if (errDiv) { errDiv.textContent = 'Username and password required'; errDiv.style.display = 'block'; }
+    return;
+  }
   showLoader('Signing in');
   const res = await api('login', { username, password });
   hideLoader();
