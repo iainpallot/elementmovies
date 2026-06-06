@@ -437,6 +437,16 @@
         </div>
       </div>
 
+      <div class="accordion-section" id="acc-ownership">
+        <div class="accordion-header" onclick="toggleAccordion('ownership')">
+          <span>Movie Ownership</span><span class="acc-arrow">›</span>
+        </div>
+        <div class="accordion-body" id="acc-body-ownership">
+          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Movies you own can be screened at no cost regardless of streaming availability.</div>
+          <div id="ownership-list"><div class="inline-loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
       <div class="accordion-section" id="acc-ourservices">
         <div class="accordion-header" onclick="toggleAccordion('ourservices')">
           <span>Our Streaming Services</span><span class="acc-arrow">›</span>
@@ -765,10 +775,7 @@ function renderHomeMovies() {
           ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
         </div>
       </div>
-      <div style="display:flex;flex-direction:column;gap:0.2rem;flex-shrink:0">
-        ${weOwnToggle}
-        ${isAdmin ? `<button onclick="removeMovie('${m.movie_id}','${m.title.replace(/'/g,'\'')}')" style="background:transparent;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0.2rem;line-height:1" title="Remove movie">🗑</button>` : ''}
-      </div>
+      ${isAdmin ? `<button onclick="removeMovie('${m.movie_id}','${m.title.replace(/'/g,'\'')}')" style="background:transparent;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0.25rem 0.25rem 0.25rem 0.5rem;flex-shrink:0;line-height:1" title="Remove movie">🗑</button>` : ''}
     </div>`;
   };
 
@@ -1127,6 +1134,7 @@ function toggleAccordion(id) {
     if (id === 'members') loadMembers();
     if (id === 'streaming') loadStreamingList();
     if (id === 'ourservices') loadOurServices();
+    if (id === 'ownership') loadOwnership();
     if (id === 'screenings') { loadHeadcounts(); loadMoviesForSelect(); }
     if (id === 'invite') loadInviteCode();
   }
@@ -1318,13 +1326,41 @@ async function toggleMemberStatus(member_id, currentStatus) {
   else alert(res.error);
 }
 
+async function loadOwnership() {
+  const el = document.getElementById('ownership-list');
+  if (!el) return;
+  el.innerHTML = '<div class="inline-loading"><div class="spinner"></div></div>';
+  const res = await api('getMovies');
+  if (!res.ok) { el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to load.</div>'; return; }
+
+  el.innerHTML = res.movies.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
+    const owned = m.we_own === 'TRUE' || m.we_own === true;
+    return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.6rem 0;border-bottom:1px solid var(--border);gap:0.75rem">
+      <div style="font-size:0.85rem;font-family:'Playfair Display',serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.title}</div>
+      <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;flex-shrink:0">
+        <div onclick="toggleWeOwn('${m.movie_id}','${m.we_own||'FALSE'}')"
+          style="width:36px;height:20px;border-radius:10px;background:${owned?'var(--teal)':'var(--surface2)'};border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0">
+          <div style="width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:1px;${owned?'right:1px':'left:1px'};transition:all 0.2s"></div>
+        </div>
+        <span style="font-size:0.75rem;color:${owned?'var(--teal-light)':'var(--text-dim)'};width:3rem">${owned?'Owned':''}</span>
+      </label>
+    </div>`;
+  }).join('');
+}
+
 async function toggleWeOwn(movie_id, currentVal) {
   const isOwned = currentVal === 'TRUE' || currentVal === true;
   const res = await api('setWeOwn', { movie_id, we_own: !isOwned });
   if (res.ok) {
+    // Update local allMovies so cost pills refresh immediately
     const movie = allMovies.find(m => m.movie_id === movie_id);
     if (movie) movie.we_own = !isOwned ? 'TRUE' : 'FALSE';
-    renderHomeMovies();
+    loadOwnership();
+    // If library is visible, re-render so cost pills update
+    if (document.getElementById('page-library').classList.contains('active')) {
+      renderHomeMovies();
+    }
   }
 }
 
