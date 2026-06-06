@@ -1057,16 +1057,40 @@ async function saveInviteCode() {
 }
 
 async function loadStreamingList() {
-  const res = await api('getMovies');
-  if (!res.ok) return;
   const el = document.getElementById('streaming-list');
-  const movies = res.movies.filter(m => m.streaming_au);
-  if (!movies.length) { el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">No streaming data.</div>'; return; }
-  el.innerHTML = movies.sort((a,b) => a.title.localeCompare(b.title)).map(m => `
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.6rem 0;border-bottom:1px solid var(--border);gap:0.75rem">
-      <div style="font-size:0.85rem;font-family:'Playfair Display',serif;flex:1">${m.title}</div>
-      <div style="font-size:0.75rem;color:var(--teal-light);text-align:right;max-width:55%">${formatStreaming(m.streaming_au)}</div>
-    </div>`).join('');
+  el.innerHTML = '<div class="inline-loading"><div class="spinner"></div> Fetching live pricing…</div>';
+  const res = await api('getStreamingDetails');
+  if (!res.ok) {
+    // Fallback to stored data
+    const movRes = await api('getMovies');
+    if (!movRes.ok) return;
+    el.innerHTML = movRes.movies.filter(m => m.streaming_au).sort((a,b) => a.title.localeCompare(b.title)).map(m => `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.6rem 0;border-bottom:1px solid var(--border);gap:0.75rem">
+        <div style="font-size:0.85rem;font-family:'Playfair Display',serif;flex:1">${m.title}</div>
+        <div style="font-size:0.75rem;color:var(--teal-light);text-align:right;max-width:55%">${formatStreaming(m.streaming_au)}</div>
+      </div>`).join('');
+    return;
+  }
+
+  el.innerHTML = res.results.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
+    const streamText = m.streaming.length ? m.streaming.join(', ') : '';
+    const rentText = m.rent.length
+      ? m.rent.map(r => `R$${r.price ? r.price.replace('A$ ','').replace('AUD ','') : '?'} ${r.name}`).join(' · ')
+      : '';
+    const buyText = (!m.streaming.length && !m.rent.length && m.buy.length)
+      ? m.buy.map(b => `B$${b.price ? b.price.replace('A$ ','').replace('AUD ','') : '?'} ${b.name}`).join(' · ')
+      : '';
+
+    const availability = [streamText, rentText, buyText].filter(Boolean).join('  ·  ');
+
+    return `
+    <div style="padding:0.6rem 0;border-bottom:1px solid var(--border)">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem">
+        <div style="font-size:0.85rem;font-family:'Playfair Display',serif;flex:1">${m.title}</div>
+      </div>
+      ${availability ? `<div style="font-size:0.75rem;color:var(--teal-light);margin-top:0.2rem;line-height:1.6">${availability}</div>` : '<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.2rem">Not available</div>'}
+    </div>`;
+  }).join('');
 }
 
 async function loadMoviesForSelect() {
