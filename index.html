@@ -141,10 +141,10 @@
   .score-bar-fill { height: 100%; background: linear-gradient(90deg, var(--teal), var(--teal-light)); border-radius: 3px; transition: width 0.5s ease; }
   .vote-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
   .vote-label { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.6rem; }
-  .number-vote { display: flex; gap: 0.3rem; flex-wrap: wrap; }
-  .vote-btn { width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim); font-size: 0.8rem; cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
-  .vote-btn:hover { border-color: var(--teal); color: var(--teal-light); }
-  .vote-btn.selected { background: var(--teal); border-color: var(--teal); color: white; font-weight: 600; }
+  .number-vote { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0.5rem; }
+  .vote-btn { width: 100%; height: 44px; border-radius: 10px; border: 1px solid var(--border); background: var(--surface2); color: var(--text-dim); font-size: 1rem; font-weight: 500; cursor: pointer; transition: all 0.15s; font-family: 'DM Sans', sans-serif; }
+  .vote-btn:hover { border-color: var(--teal); color: var(--teal-light); background: var(--teal-dim); }
+  .vote-btn.selected { background: var(--teal); border-color: var(--teal); color: white; font-weight: 700; }
   .vote-msg { font-size: 0.78rem; color: var(--teal-light); margin-top: 0.5rem; min-height: 1.2em; }
 
   /* ── Seat picker ── */
@@ -824,12 +824,11 @@ function showDetail(movie_id) {
       <div class="detail-info">
         <div class="detail-title">${m.title}</div>
         <div class="detail-actor">${m.lead_actor||''}</div>
-        <div class="detail-badges">
-          ${m.imdb_rating?`<span class="badge badge-imdb">⭐ ${m.imdb_rating} IMDB</span>`:''}
-          ${m.rt_score?`<span class="badge badge-rt">🍅 ${formatRT(m.rt_score)}</span>`:''}
+        <div class="detail-badges" style="margin-bottom:0.5rem">
+          ${m.imdb_rating?`<a href="${m.imdb_url||'#'}" target="_blank" class="badge badge-imdb" style="text-decoration:none">⭐ ${m.imdb_rating} IMDB</a>`:''}
+          ${m.rt_score?`<a href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.title)}" target="_blank" class="badge badge-rt" style="text-decoration:none">🍅 ${formatRT(m.rt_score)}</a>`:''}
         </div>
-        ${m.imdb_url?`<a href="${m.imdb_url}" target="_blank" class="detail-imdb-link">View on IMDB ↗</a>`:''}
-        ${m.streaming_au?`<div class="detail-streaming">▶ ${m.streaming_au}</div>`:''}
+        ${costPill(isFreeToScreen(m, ourServicesCache||[]))}
       </div>
     </div>
     <div class="community-score-block">
@@ -940,6 +939,7 @@ function screeningCardHTML(s, i) {
         <div class="screening-title">${s.movie_title}</div>
         <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;margin-bottom:0.4rem">
           ${s.movie_imdb_rating && movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank" class="badge badge-imdb" style="text-decoration:none">⭐ ${s.movie_imdb_rating} IMDB</a>` : s.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${s.movie_imdb_rating}</span>` : ''}
+          ${movie.rt_score ? `<a href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(s.movie_title)}" target="_blank" class="badge badge-rt" style="text-decoration:none">🍅 ${formatRT(movie.rt_score)}</a>` : ''}
           ${communityScr}
           ${(()=>{ const mv = allMovies.find(x=>x.movie_id===s.movie_id)||{}; return costPill(isFreeToScreen(mv, ourServicesCache||[])); })()}
         </div>
