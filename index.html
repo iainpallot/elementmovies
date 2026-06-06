@@ -1109,15 +1109,22 @@ async function removeOurService(index) {
   if (res.ok) { ourServicesCache = services; renderOurServicesList(services); }
 }
 
+function fuzzyServiceMatch(a, b) {
+  // Strip spaces, +, punctuation and compare core name
+  const clean = s => s.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const ca = clean(a), cb = clean(b);
+  return ca === cb || ca.includes(cb) || cb.includes(ca);
+}
+
 function isFreeToScreen(movie, ourServices) {
-  if (!ourServices || !ourServices.length) return null; // unknown
+  if (!ourServices || !ourServices.length) return null;
   if (movie.we_own === 'TRUE' || movie.we_own === true) return true;
   if (!movie.streaming_au) return false;
-  // Normalise both sides before comparing
   const raw = movie.streaming_au.replace('Stream: ','').split(',').map(s => s.trim());
-  const movieNormalised = raw.map(normaliseService).filter(Boolean).map(s => s.toLowerCase());
-  const ourNormalised = ourServices.map(s => s.toLowerCase());
-  return ourNormalised.some(s => movieNormalised.some(ms => ms === s || ms.includes(s) || s.includes(ms)));
+  const movieNormalised = raw.map(normaliseService).filter(Boolean);
+  return ourServices.some(ourSvc =>
+    movieNormalised.some(ms => fuzzyServiceMatch(ms, ourSvc))
+  );
 }
 
 function costPill(isFree) {
