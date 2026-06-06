@@ -638,7 +638,7 @@ function showPage(page) {
 
 async function goBack() {
   showPage(prevPage);
-  if (prevPage === 'home') {
+  if (prevPage === 'library') {
     // Use local allMovies (already updated by castVote) — don't re-fetch
     // which would overwrite the local update before the server has committed
     renderHomeMovies();
