@@ -290,7 +290,7 @@
       <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="Your username" autocomplete="username"></div>
       <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Your password" autocomplete="current-password"></div>
       <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
-      <div id="login-msg" class="msg"></div>
+      <div id="login-error" class="msg error" style="display:none"></div>
     </div>
     <div id="register-form" style="display:none">
       <div class="form-group"><label>Your Name</label><input type="text" id="reg-name" placeholder="Your full name"></div>
@@ -504,7 +504,10 @@ async function doLogin() {
     session = { member_id: res.member_id, name: res.name, is_admin: res.is_admin };
     localStorage.setItem('em_session', JSON.stringify(session));
     startApp();
-  } else showMsg(msg, res.error, 'error');
+  } else {
+    const errDiv = document.getElementById('login-error');
+    if (errDiv) { errDiv.textContent = res.error; errDiv.style.display = 'block'; }
+  }
 }
 
 async function doRegister() {
