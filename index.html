@@ -575,6 +575,8 @@ function startApp() {
   document.getElementById('header-greeting').textContent = `Welcome, ${session.name.split(' ')[0].toUpperCase()}`;
   if (session.is_admin) document.getElementById('nav-admin').style.display = 'flex';
   window.scrollTo(0, 0);
+  // Preload movies so images are ready when screenings page renders
+  api('getMovies').then(r => { if (r.ok) allMovies = r.movies; });
   showPage('screenings');
 }
 
@@ -589,7 +591,13 @@ function showPage(page) {
   const titles = { screenings: 'Home', library: 'Library', detail: '', admin: 'Admin' };
   document.getElementById('header-page').textContent = titles[page] ?? '';
   window.scrollTo(0, 0);
-  if (page === 'screenings') loadScreenings();
+  if (page === 'screenings') {
+    if (!allMovies.length) {
+      api('getMovies').then(r => { if (r.ok) allMovies = r.movies; loadScreenings(); });
+    } else {
+      loadScreenings();
+    }
+  }
   if (page === 'library') { if (!allMovies.length) loadLibrary(); else renderHomeMovies(); }
   if (page === 'admin') loadAdmin();
 }
@@ -1056,41 +1064,67 @@ async function saveInviteCode() {
   showMsg(msg, res.ok ? '✓ Invite code updated' : res.error, res.ok ? 'success' : 'error');
 }
 
-async function loadStreamingList() {
+let streamingCache = null;
+
+function renderStreamingList(results) {
   const el = document.getElementById('streaming-list');
-  el.innerHTML = '<div class="inline-loading"><div class="spinner"></div> Fetching live pricing…</div>';
-  const res = await api('getStreamingDetails');
-  if (!res.ok) {
-    // Fallback to stored data
-    const movRes = await api('getMovies');
-    if (!movRes.ok) return;
-    el.innerHTML = movRes.movies.filter(m => m.streaming_au).sort((a,b) => a.title.localeCompare(b.title)).map(m => `
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:0.6rem 0;border-bottom:1px solid var(--border);gap:0.75rem">
-        <div style="font-size:0.85rem;font-family:'Playfair Display',serif;flex:1">${m.title}</div>
-        <div style="font-size:0.75rem;color:var(--teal-light);text-align:right;max-width:55%">${formatStreaming(m.streaming_au)}</div>
-      </div>`).join('');
-    return;
-  }
+  const appleRentPriority = ['Apple TV Store', 'Apple TV', 'iTunes'];
 
-  el.innerHTML = res.results.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
+  el.innerHTML = `
+    <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
+      <button onclick="refreshStreamingList()" class="btn btn-ghost btn-sm">↻ Refresh prices</button>
+    </div>` +
+  results.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
     const streamText = m.streaming.length ? m.streaming.join(', ') : '';
-    const rentText = m.rent.length
-      ? m.rent.map(r => `R$${r.price ? r.price.replace('A$ ','').replace('AUD ','') : '?'} ${r.name}`).join(' · ')
-      : '';
-    const buyText = (!m.streaming.length && !m.rent.length && m.buy.length)
-      ? m.buy.map(b => `B$${b.price ? b.price.replace('A$ ','').replace('AUD ','') : '?'} ${b.name}`).join(' · ')
-      : '';
 
-    const availability = [streamText, rentText, buyText].filter(Boolean).join('  ·  ');
+    // Find Apple TV rent price only
+    let rentText = '';
+    const appleRent = m.rent.find(r => appleRentPriority.some(n => r.name.includes(n)));
+    if (appleRent && appleRent.price) {
+      rentText = `R$${appleRent.price.replace('A$ ','').replace('AUD ','').replace('A$','')}`;
+    } else if (m.rent.length && m.rent[0].price) {
+      rentText = `R$${m.rent[0].price.replace('A$ ','').replace('AUD ','').replace('A$','')}`;
+    }
+
+    // Buy only if no stream and no rent
+    let buyText = '';
+    if (!streamText && !rentText && m.buy.length) {
+      const appleBuy = m.buy.find(r => appleRentPriority.some(n => r.name.includes(n))) || m.buy[0];
+      if (appleBuy?.price) buyText = `B$${appleBuy.price.replace('A$ ','').replace('AUD ','').replace('A$','')}`;
+    }
+
+    const parts = [streamText, rentText, buyText].filter(Boolean);
+    const availability = parts.join('  ·  ');
 
     return `
-    <div style="padding:0.6rem 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:0.75rem">
-        <div style="font-size:0.85rem;font-family:'Playfair Display',serif;flex:1">${m.title}</div>
-      </div>
-      ${availability ? `<div style="font-size:0.75rem;color:var(--teal-light);margin-top:0.2rem;line-height:1.6">${availability}</div>` : '<div style="font-size:0.72rem;color:var(--text-dim);margin-top:0.2rem">Not available</div>'}
+    <div style="display:flex;justify-content:space-between;align-items:baseline;padding:0.55rem 0;border-bottom:1px solid var(--border);gap:0.75rem">
+      <div style="font-size:0.82rem;font-family:'Playfair Display',serif;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.title}</div>
+      <div style="font-size:0.75rem;color:var(--teal-light);white-space:nowrap;flex-shrink:0">${availability || '<span style="color:var(--text-dim)">N/A</span>'}</div>
     </div>`;
   }).join('');
+}
+
+async function loadStreamingList() {
+  const el = document.getElementById('streaming-list');
+  if (streamingCache) {
+    renderStreamingList(streamingCache);
+    return;
+  }
+  await refreshStreamingList();
+}
+
+async function refreshStreamingList() {
+  const el = document.getElementById('streaming-list');
+  el.innerHTML = '<div class="inline-loading"><div class="spinner"></div> Fetching live pricing…</div>';
+  showLoader('Fetching streaming prices…');
+  const res = await api('getStreamingDetails');
+  hideLoader();
+  if (!res.ok || !res.results) {
+    el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to fetch pricing. Try again.</div>';
+    return;
+  }
+  streamingCache = res.results;
+  renderStreamingList(streamingCache);
 }
 
 async function loadMoviesForSelect() {
