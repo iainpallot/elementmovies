@@ -1118,7 +1118,12 @@ async function loadStreamingList() {
     renderStreamingList(streamingCache);
     return;
   }
-  await refreshStreamingList();
+  // Don't auto-fetch — show prompt instead
+  el.innerHTML = `
+    <div style="text-align:center;padding:1.5rem 0">
+      <div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:0.75rem">Tap to fetch current streaming prices and availability</div>
+      <button onclick="refreshStreamingList()" class="btn btn-secondary btn-sm" style="width:auto;padding:0.5rem 1.2rem">↻ Fetch Prices</button>
+    </div>`;
 }
 
 async function refreshStreamingList() {
