@@ -1291,12 +1291,47 @@ async function refreshStreamingList() {
   el.innerHTML = '<div class="inline-loading"><div class="spinner"></div> Fetching live pricing…</div>';
   showLoader('Fetching streaming prices…');
   const res = await api('getStreamingDetails');
-  hideLoader();
   if (!res.ok || !res.results) {
+    hideLoader();
     el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to fetch pricing. Try again.</div>';
     return;
   }
   streamingCache = res.results;
+
+  // Build updates to save back to Sheet
+  const updates = res.results.map(m => {
+    const appleRentPriority = ['Apple TV Store', 'Apple TV', 'iTunes'];
+    const streaming = [...new Set(m.streaming.map(s => s))];
+    let streaming_au = '';
+    if (streaming.length) {
+      streaming_au = 'Stream: ' + streaming.join(', ');
+    } else if (m.rent.length) {
+      const appleRent = m.rent.find(r => appleRentPriority.some(n => r.name.includes(n))) || m.rent[0];
+      const price = appleRent?.price ? appleRent.price.replace('A$ ','').replace('AUD ','').trim() : null;
+      streaming_au = price ? `Rent/Buy: A$ ${price}` : 'Rent/Buy only';
+    } else if (m.buy.length) {
+      const appleBuy = m.buy.find(r => appleRentPriority.some(n => r.name.includes(n))) || m.buy[0];
+      const price = appleBuy?.price ? appleBuy.price.replace('A$ ','').replace('AUD ','').trim() : null;
+      streaming_au = price ? `Rent/Buy: A$ ${price}` : 'Rent/Buy only';
+    } else {
+      streaming_au = 'Not available AU';
+    }
+    return { movie_id: m.movie_id, streaming_au };
+  });
+
+  // Save back to Sheet
+  showLoader('Saving streaming data…');
+  const saveRes = await api('saveStreamingData', { updates });
+  hideLoader();
+
+  if (saveRes.ok) {
+    // Update local allMovies cache too
+    updates.forEach(u => {
+      const movie = allMovies.find(m => m.movie_id === u.movie_id);
+      if (movie) movie.streaming_au = u.streaming_au;
+    });
+  }
+
   renderStreamingList(streamingCache);
 }
 
