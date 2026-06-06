@@ -610,7 +610,7 @@ function startApp() {
   // Track last visit for new-movies banner
   const today = new Date().toISOString().split('T')[0];
   window._lastVisitDate = localStorage.getItem('em_lastVisit');
-  localStorage.setItem('em_lastVisit', today);
+  localStorage.setItem('em_lastVisit', new Date().toISOString());
   // Preload movies and our services on login
   Promise.all([
     api('getMovies').then(r => { if (r.ok) allMovies = r.movies; }),
@@ -735,7 +735,8 @@ function renderNewMoviesBanner() {
   const lastVisit = window._lastVisitDate;
   // First-ever visit: no banner, just set the baseline for next time
   if (!lastVisit) { banner.style.display = 'none'; return; }
-  const newMovies = allMovies.filter(m => m.added_date && m.added_date.substring(0, 10) > lastVisit);
+  const lastVisitTime = lastVisit ? new Date(lastVisit).getTime() : null;
+  const newMovies = allMovies.filter(m => m.added_date && lastVisitTime && new Date(m.added_date).getTime() > lastVisitTime);
   if (!newMovies.length) { banner.style.display = 'none'; return; }
 
   const rows = newMovies.map((m, i) => {
