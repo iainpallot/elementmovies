@@ -1076,7 +1076,7 @@ function renderStreamingList(results) {
 
   el.innerHTML = `
     <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
-      <button onclick="refreshStreamingList()" class="btn btn-ghost btn-sm">↻ Refresh prices</button>
+      <button onclick="refreshStreamingList()" class="btn btn-ghost btn-sm" title="Fetch live prices from JustWatch">↻ Refresh live prices</button>
     </div>` +
   results.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
     // Deduplicate streaming services
@@ -1114,16 +1114,27 @@ function renderStreamingList(results) {
 
 async function loadStreamingList() {
   const el = document.getElementById('streaming-list');
-  if (streamingCache) {
-    renderStreamingList(streamingCache);
-    return;
-  }
-  // Don't auto-fetch — show prompt instead
-  el.innerHTML = `
-    <div style="text-align:center;padding:1.5rem 0">
-      <div style="font-size:0.85rem;color:var(--text-dim);margin-bottom:0.75rem">Tap to fetch current streaming prices and availability</div>
-      <button onclick="refreshStreamingList()" class="btn btn-secondary btn-sm" style="width:auto;padding:0.5rem 1.2rem">↻ Fetch Prices</button>
-    </div>`;
+  if (streamingCache) { renderStreamingList(streamingCache); return; }
+
+  // Load from stored allMovies data (Sheet values) — always available
+  const res = await api('getMovies');
+  if (!res.ok) { el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to load.</div>'; return; }
+
+  // Convert stored streaming_au string into the same format renderStreamingList expects
+  const storedResults = res.movies.map(m => {
+    const val = m.streaming_au || '';
+    const streaming = val.startsWith('Stream: ')
+      ? val.replace('Stream: ','').split(',').map(s => s.trim())
+      : [];
+    const isRentBuy = val.startsWith('Rent/Buy:') || val === '$$$';
+    const price = val.match(/\$[\d.]+/)?.[0]?.replace('$','') || null;
+    const rent = isRentBuy && price ? [{ name: 'Apple TV', price }] : [];
+    const buy = [];
+    return { movie_id: m.movie_id, title: m.title, streaming, rent, buy };
+  });
+
+  streamingCache = storedResults;
+  renderStreamingList(storedResults);
 }
 
 async function refreshStreamingList() {
