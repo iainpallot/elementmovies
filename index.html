@@ -1070,30 +1070,38 @@ function renderStreamingList(results) {
   const el = document.getElementById('streaming-list');
   const appleRentPriority = ['Apple TV Store', 'Apple TV', 'iTunes'];
 
+  function cleanPrice(p) {
+    return p ? p.replace('A$ ','').replace('AUD ','').replace('A$','').trim() : null;
+  }
+
   el.innerHTML = `
     <div style="display:flex;justify-content:flex-end;margin-bottom:0.75rem">
       <button onclick="refreshStreamingList()" class="btn btn-ghost btn-sm">↻ Refresh prices</button>
     </div>` +
   results.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
-    const streamText = m.streaming.length ? m.streaming.join(', ') : '';
+    // Deduplicate streaming services
+    const streamServices = dedupeServices(m.streaming);
+    const streamText = streamServices.join(', ');
 
-    // Find Apple TV rent price only
+    // Apple TV rent price — always last
     let rentText = '';
     const appleRent = m.rent.find(r => appleRentPriority.some(n => r.name.includes(n)));
-    if (appleRent && appleRent.price) {
-      rentText = `R$${appleRent.price.replace('A$ ','').replace('AUD ','').replace('A$','')}`;
-    } else if (m.rent.length && m.rent[0].price) {
-      rentText = `R$${m.rent[0].price.replace('A$ ','').replace('AUD ','').replace('A$','')}`;
+    const anyRent = appleRent || m.rent[0];
+    if (anyRent) {
+      const price = cleanPrice(anyRent.price);
+      if (price) rentText = `R$${price}`;
     }
 
     // Buy only if no stream and no rent
     let buyText = '';
     if (!streamText && !rentText && m.buy.length) {
       const appleBuy = m.buy.find(r => appleRentPriority.some(n => r.name.includes(n))) || m.buy[0];
-      if (appleBuy?.price) buyText = `B$${appleBuy.price.replace('A$ ','').replace('AUD ','').replace('A$','')}`;
+      const price = cleanPrice(appleBuy?.price);
+      if (price) buyText = `B$${price}`;
     }
 
-    const parts = [streamText, rentText, buyText].filter(Boolean);
+    // Stream first, rent always last
+    const parts = [streamText, buyText, rentText].filter(Boolean);
     const availability = parts.join('  ·  ');
 
     return `
@@ -1451,6 +1459,34 @@ function formatStreaming(val) {
   if (val.startsWith('Rent/Buy:') || val.includes('Rent/Buy')) return '$$$';
   if (val === 'Not available AU') return '$$$';
   return val;
+}
+
+function normaliseService(name) {
+  const n = name.toLowerCase();
+  if (n.includes('netflix')) return 'Netflix';
+  if (n.includes('disney')) return 'Disney+';
+  if (n.includes('stan')) return 'Stan';
+  if (n.includes('binge')) return 'BINGE';
+  if (n.includes('paramount')) return 'Paramount+';
+  if (n.includes('prime video') || n.includes('amazon')) return 'Prime Video';
+  if (n.includes('apple')) return 'Apple TV';
+  if (n.includes('foxtel') || n.includes('fox now')) return 'Foxtel';
+  if (n.includes('britbox')) return 'BritBox';
+  if (n.includes('hbo')) return 'HBO Max';
+  if (n.includes('mgm')) return 'MGM+';
+  if (n.includes('tubi')) return 'Tubi';
+  if (n.includes('youtube')) return 'YouTube';
+  if (n.includes('google')) return 'Google Play';
+  return name; // keep original if no match
+}
+
+function dedupeServices(arr) {
+  const seen = new Set();
+  return arr.map(normaliseService).filter(s => {
+    if (seen.has(s)) return false;
+    seen.add(s);
+    return true;
+  });
 }
 
 function formatRT(val) {
