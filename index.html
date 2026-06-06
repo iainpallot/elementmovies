@@ -1113,8 +1113,11 @@ function isFreeToScreen(movie, ourServices) {
   if (!ourServices || !ourServices.length) return null; // unknown
   if (movie.we_own === 'TRUE' || movie.we_own === true) return true;
   if (!movie.streaming_au) return false;
-  const movieServices = movie.streaming_au.replace('Stream: ','').split(',').map(s => s.trim().toLowerCase());
-  return ourServices.some(s => movieServices.some(ms => ms.includes(s.toLowerCase()) || s.toLowerCase().includes(ms)));
+  // Normalise both sides before comparing
+  const raw = movie.streaming_au.replace('Stream: ','').split(',').map(s => s.trim());
+  const movieNormalised = raw.map(normaliseService).filter(Boolean).map(s => s.toLowerCase());
+  const ourNormalised = ourServices.map(s => s.toLowerCase());
+  return ourNormalised.some(s => movieNormalised.some(ms => ms === s || ms.includes(s) || s.includes(ms)));
 }
 
 function costPill(isFree) {
@@ -1671,8 +1674,14 @@ function normaliseService(name) {
   if (n.includes('stan')) return 'Stan';
   if (n.includes('binge')) return 'BINGE';
   if (n.includes('paramount')) return 'Paramount+';
-  if (n.includes('prime video') || n.includes('amazon')) return 'Prime Video';
-  if (n.includes('apple')) return 'Apple TV';
+  // Distinguish Prime Video subscription from Amazon rental store
+  if (n === 'prime video' || n === 'amazon prime video') return 'Prime Video';
+  if (n.includes('amazon video') || n.includes('amazon store')) return null; // rental, not subscription
+  if (n.includes('prime video')) return 'Prime Video';
+  // Distinguish Apple TV+ subscription from Apple TV Store (rental)
+  if (n === 'apple tv+' || n === 'apple tv plus') return 'Apple TV+';
+  if (n.includes('apple tv store') || n.includes('itunes')) return null; // rental, not subscription
+  if (n.includes('apple tv')) return 'Apple TV+'; // assume + if ambiguous
   if (n.includes('foxtel') || n.includes('fox now')) return 'Foxtel';
   if (n.includes('britbox')) return 'BritBox';
   if (n.includes('hbo')) return 'HBO Max';
@@ -1680,17 +1689,21 @@ function normaliseService(name) {
   if (n.includes('tubi')) return 'Tubi';
   if (n.includes('youtube')) return 'YouTube';
   if (n.includes('google')) return 'Google Play';
-  return name; // keep original if no match
+  return name;
 }
 
+// Only keep subscription services (nulls are rental/store)
 function dedupeServices(arr) {
   const seen = new Set();
   return arr.map(normaliseService).filter(s => {
+    if (!s) return false; // drop rental platforms
     if (seen.has(s)) return false;
     seen.add(s);
     return true;
   });
 }
+
+
 
 function formatRT(val) {
   if (!val) return '';
