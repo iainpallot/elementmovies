@@ -437,6 +437,21 @@
         </div>
       </div>
 
+      <div class="accordion-section" id="acc-ourservices">
+        <div class="accordion-header" onclick="toggleAccordion('ourservices')">
+          <span>Our Streaming Services</span><span class="acc-arrow">›</span>
+        </div>
+        <div class="accordion-body" id="acc-body-ourservices">
+          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Services we currently subscribe to. Movies matching these are flagged as Free to screen.</div>
+          <div id="our-services-list"></div>
+          <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+            <input type="text" id="new-service-input" placeholder="e.g. Stan, Netflix…" style="flex:1;padding:0.6rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none">
+            <button class="btn btn-primary btn-sm" onclick="addOurService()" style="white-space:nowrap">Add</button>
+          </div>
+          <div id="our-services-msg" class="msg"></div>
+        </div>
+      </div>
+
       <div class="accordion-section" id="acc-streaming">
         <div class="accordion-header" onclick="toggleAccordion('streaming')">
           <span>Streaming Availability</span><span class="acc-arrow">›</span>
@@ -717,11 +732,19 @@ function renderHomeMovies() {
   const list = document.getElementById('home-movies-list');
   if (!movies.length) { list.innerHTML = '<div class="empty-state"><p>No movies found.</p></div>'; return; }
 
+  const ourSvcs = ourServicesCache || [];
   const renderRow = (m, i, isScreened) => {
     const poster = m.poster_url
       ? `<img class="movie-row-poster" src="${m.poster_url}" onerror="this.outerHTML='<div class=movie-row-poster-placeholder>🎬</div>'">`
       : `<div class="movie-row-poster-placeholder">🎬</div>`;
     const isAdmin = session && session.is_admin;
+    const free = ourSvcs.length > 0 ? isFreeToScreen(m, ourSvcs) : null;
+    const pill = costPill(free);
+    const weOwnToggle = isAdmin ? `
+      <button onclick="event.stopPropagation();toggleWeOwn('${m.movie_id}','${m.we_own}')"
+        title="${m.we_own==='TRUE'||m.we_own===true?'We own this':'Mark as owned'}"
+        style="background:transparent;border:none;font-size:0.9rem;cursor:pointer;padding:0.2rem;flex-shrink:0;opacity:${m.we_own==='TRUE'||m.we_own===true?'1':'0.3'}"
+      >📀</button>` : '';
     return `
     <div class="movie-row${isScreened?' screened':''}" style="animation-delay:${i*0.03}s">
       <div onclick="showDetail('${m.movie_id}')" style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:0">
@@ -729,14 +752,20 @@ function renderHomeMovies() {
         <div class="movie-row-info">
           <div class="movie-row-title">${m.title}</div>
           <div class="movie-row-actor">${m.lead_actor||''}</div>
-          ${isScreened ? '<div class="movie-row-tag">Screened</div>' : ''}
+          <div style="display:flex;gap:0.3rem;margin-top:0.2rem;flex-wrap:wrap">
+            ${isScreened ? '<div class="movie-row-tag">Screened</div>' : ''}
+            ${pill}
+          </div>
         </div>
         <div class="movie-row-scores">
           ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
           ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
         </div>
       </div>
-      ${isAdmin ? `<button onclick="removeMovie('${m.movie_id}','${m.title.replace(/'/g,'\'')}')" style="background:transparent;border:none;color:var(--text-dim);font-size:1.1rem;cursor:pointer;padding:0.25rem 0.25rem 0.25rem 0.5rem;flex-shrink:0;line-height:1" title="Remove movie">🗑</button>` : ''}
+      <div style="display:flex;flex-direction:column;gap:0.2rem;flex-shrink:0">
+        ${weOwnToggle}
+        ${isAdmin ? `<button onclick="removeMovie('${m.movie_id}','${m.title.replace(/'/g,'\'')}')" style="background:transparent;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0.2rem;line-height:1" title="Remove movie">🗑</button>` : ''}
+      </div>
     </div>`;
   };
 
@@ -889,6 +918,7 @@ function screeningCardHTML(s, i) {
         <div style="display:flex;gap:0.4rem;flex-wrap:wrap;align-items:center;margin-bottom:0.4rem">
           ${s.movie_imdb_rating && movie.imdb_url ? `<a href="${movie.imdb_url}" target="_blank" class="badge badge-imdb" style="text-decoration:none">⭐ ${s.movie_imdb_rating} IMDB</a>` : s.movie_imdb_rating ? `<span class="badge badge-imdb">⭐ ${s.movie_imdb_rating}</span>` : ''}
           ${communityScr}
+          ${(()=>{ const mv = allMovies.find(x=>x.movie_id===s.movie_id)||{}; return costPill(isFreeToScreen(mv, ourServicesCache||[])); })()}
         </div>
       </div>
     </div>
@@ -1001,6 +1031,76 @@ async function cancelBooking(screening_id) {
 }
 
 // ── ADMIN ──
+// ── OUR SERVICES & COST LOGIC ──
+let ourServicesCache = null;
+
+async function getOurServices() {
+  if (ourServicesCache) return ourServicesCache;
+  const res = await api('getOurServices');
+  ourServicesCache = res.ok ? res.services : [];
+  return ourServicesCache;
+}
+
+async function loadOurServices() {
+  const el = document.getElementById('our-services-list');
+  const services = await getOurServices();
+  renderOurServicesList(services);
+}
+
+function renderOurServicesList(services) {
+  const el = document.getElementById('our-services-list');
+  if (!services.length) {
+    el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">No services added yet.</div>';
+    return;
+  }
+  el.innerHTML = services.map((s, i) => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border)">
+      <span style="font-size:0.88rem">${s}</span>
+      <button onclick="removeOurService(${i})" style="background:transparent;border:none;color:var(--text-dim);font-size:1rem;cursor:pointer;padding:0.2rem 0.4rem">✕</button>
+    </div>`).join('');
+}
+
+async function addOurService() {
+  const input = document.getElementById('new-service-input');
+  const msg = document.getElementById('our-services-msg');
+  const name = input.value.trim();
+  if (!name) return;
+  const services = await getOurServices();
+  if (services.map(s => s.toLowerCase()).includes(name.toLowerCase())) {
+    showMsg(msg, 'Already in your list', 'error'); return;
+  }
+  services.push(name);
+  const res = await api('setOurServices', { services });
+  if (res.ok) {
+    ourServicesCache = services;
+    input.value = '';
+    renderOurServicesList(services);
+    showMsg(msg, `✓ ${name} added`, 'success');
+  } else showMsg(msg, res.error, 'error');
+}
+
+async function removeOurService(index) {
+  const services = await getOurServices();
+  services.splice(index, 1);
+  const res = await api('setOurServices', { services });
+  if (res.ok) { ourServicesCache = services; renderOurServicesList(services); }
+}
+
+function isFreeToScreen(movie, ourServices) {
+  if (!ourServices || !ourServices.length) return null; // unknown
+  if (movie.we_own === 'TRUE' || movie.we_own === true) return true;
+  if (!movie.streaming_au) return false;
+  const movieServices = movie.streaming_au.replace('Stream: ','').split(',').map(s => s.trim().toLowerCase());
+  return ourServices.some(s => movieServices.some(ms => ms.includes(s.toLowerCase()) || s.toLowerCase().includes(ms)));
+}
+
+function costPill(isFree) {
+  if (isFree === null) return '';
+  return isFree
+    ? `<span style="background:rgba(39,174,96,0.15);color:#2ecc71;border:1px solid rgba(39,174,96,0.3);border-radius:20px;padding:0.15rem 0.55rem;font-size:0.68rem;font-weight:600;white-space:nowrap">🟢 Free</span>`
+    : `<span style="background:rgba(230,126,34,0.15);color:#f39c12;border:1px solid rgba(230,126,34,0.3);border-radius:20px;padding:0.15rem 0.55rem;font-size:0.68rem;font-weight:600;white-space:nowrap">🟡 Cost</span>`;
+}
+
 // ── ACCORDION ──
 let openAccordion = null;
 
@@ -1023,6 +1123,7 @@ function toggleAccordion(id) {
   if (!isOpen) {
     if (id === 'members') loadMembers();
     if (id === 'streaming') loadStreamingList();
+    if (id === 'ourservices') loadOurServices();
     if (id === 'screenings') { loadHeadcounts(); loadMoviesForSelect(); }
     if (id === 'invite') loadInviteCode();
   }
@@ -1212,6 +1313,16 @@ async function toggleMemberStatus(member_id, currentStatus) {
   const res = await api(action, { target_member_id: member_id });
   if (res.ok) loadMembers();
   else alert(res.error);
+}
+
+async function toggleWeOwn(movie_id, currentVal) {
+  const isOwned = currentVal === 'TRUE' || currentVal === true;
+  const res = await api('setWeOwn', { movie_id, we_own: !isOwned });
+  if (res.ok) {
+    const movie = allMovies.find(m => m.movie_id === movie_id);
+    if (movie) movie.we_own = !isOwned ? 'TRUE' : 'FALSE';
+    renderHomeMovies();
+  }
 }
 
 async function removeMovie(movie_id, title) {
