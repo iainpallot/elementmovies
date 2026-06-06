@@ -606,8 +606,11 @@ function startApp() {
   document.getElementById('header-greeting').textContent = `Welcome, ${session.name.split(' ')[0].toUpperCase()}`;
   if (session.is_admin) document.getElementById('nav-admin').style.display = 'flex';
   window.scrollTo(0, 0);
-  // Preload movies so images are ready when screenings page renders
-  api('getMovies').then(r => { if (r.ok) allMovies = r.movies; });
+  // Preload movies and our services on login
+  Promise.all([
+    api('getMovies').then(r => { if (r.ok) allMovies = r.movies; }),
+    api('getOurServices').then(r => { if (r.ok) ourServicesCache = r.services; })
+  ]).then(() => {});
   showPage('screenings');
 }
 
@@ -781,8 +784,18 @@ function renderHomeMovies() {
 
   let html = unscreened.map((m, i) => renderRow(m, i, false)).join('');
   if (screened.length) {
-    html += `<div class="divider-label">Already Screened</div>`;
-    html += screened.map((m, i) => renderRow(m, i, true)).join('');
+    html += `
+    <div style="margin-top:0.75rem">
+      <div id="screened-accordion-header"
+        onclick="const b=document.getElementById('screened-accordion-body');const open=b.style.display!=='none';b.style.display=open?'none':'block';this.querySelector('.acc-arrow').style.transform=open?'':'rotate(90deg)'"
+        style="display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:0.8rem;color:var(--text-dim)">
+        <span>Already Screened (${screened.length})</span>
+        <span class="acc-arrow" style="transition:transform 0.2s;font-size:1.1rem">›</span>
+      </div>
+      <div id="screened-accordion-body" style="display:none;margin-top:0.5rem">
+        ${screened.map((m, i) => renderRow(m, i, true)).join('')}
+      </div>
+    </div>`;
   }
   list.innerHTML = html;
 }
@@ -1235,16 +1248,27 @@ async function loadStreamingList() {
   const res = await api('getMovies');
   if (!res.ok) { el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to load.</div>'; return; }
 
-  // Convert stored streaming_au string into the same format renderStreamingList expects
+  // Convert stored streaming_au string into format renderStreamingList expects
   const storedResults = res.movies.map(m => {
     const val = m.streaming_au || '';
-    const streaming = val.startsWith('Stream: ')
-      ? val.replace('Stream: ','').split(',').map(s => s.trim())
-      : [];
-    const isRentBuy = val.startsWith('Rent/Buy:') || val === '$$$';
-    const price = val.match(/\$[\d.]+/)?.[0]?.replace('$','') || null;
-    const rent = isRentBuy && price ? [{ name: 'Apple TV', price }] : [];
-    const buy = [];
+    // Handle various stored formats
+    let streaming = [], rent = [], buy = [];
+
+    if (val.startsWith('Stream: ')) {
+      streaming = val.replace('Stream: ','').split(',').map(s => s.trim());
+    } else if (val && !val.startsWith('Rent/Buy') && val !== '$$$' && val !== 'Not available AU') {
+      // Plain list like "Stan, BINGE, Netflix"
+      streaming = val.split(',').map(s => s.trim()).filter(Boolean);
+    }
+
+    // Extract rent price if stored
+    const priceMatch = val.match(/A\$\s*([\d.]+)|\$([\d.]+)/);
+    const price = priceMatch ? (priceMatch[1] || priceMatch[2]) : null;
+
+    if (val.startsWith('Rent/Buy') || val === '$$$') {
+      rent = [{ name: 'Apple TV', price: price || '4.99' }];
+    }
+
     return { movie_id: m.movie_id, title: m.title, streaming, rent, buy };
   });
 
@@ -1269,9 +1293,19 @@ async function refreshStreamingList() {
 async function loadMoviesForSelect() {
   const res = await api('getMovies');
   if (!res.ok) return;
+  const movies = res.movies.sort((a, b) => {
+    // Sort by community score desc, then A-Z
+    const aScore = a.avg_score ? parseFloat(a.avg_score) : -1;
+    const bScore = b.avg_score ? parseFloat(b.avg_score) : -1;
+    if (aScore !== bScore) return bScore - aScore;
+    return a.title.localeCompare(b.title);
+  });
   const sel = document.getElementById('screening-movie-select');
   sel.innerHTML = '<option value="">Select a movie…</option>' +
-    res.movies.map(m => `<option value="${m.movie_id}">${m.title}</option>`).join('');
+    movies.map(m => {
+      const score = m.avg_score ? `${m.avg_score} · ` : '';
+      return `<option value="${m.movie_id}">${score}${m.title}</option>`;
+    }).join('');
 }
 
 async function loadMembers() {
