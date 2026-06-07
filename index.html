@@ -265,9 +265,10 @@
   .ack-ok-btn:hover { border-color: var(--teal); color: var(--teal-light); }
   .ack-ok-btn.acked { color: var(--teal); border-color: rgba(27,122,122,0.4); }
   .home-bottom-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
-  .home-square-tile { flex: 1; aspect-ratio: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; cursor: pointer; transition: border-color 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .home-square-tile { flex: 1; min-height: 110px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 0.9rem 0.75rem; cursor: pointer; transition: border-color 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 0.2rem; }
   .home-square-tile:hover { border-color: rgba(27,122,122,0.4); }
   .home-new-movies-tile { background: linear-gradient(135deg, rgba(27,122,122,0.15), rgba(27,122,122,0.05)); border-color: rgba(27,122,122,0.3) !important; }
+  .btn:focus-visible { outline: 2px solid var(--teal-light); outline-offset: 2px; }
 </style>
 </head>
 <body>
@@ -305,24 +306,24 @@
       <button class="auth-tab" onclick="switchTab('changepass')">Change Password</button>
     </div>
     <div id="login-form">
-      <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="Your username" autocomplete="username"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Your password" autocomplete="current-password"></div>
+      <div class="form-group"><label>Username</label><input type="text" id="login-username" placeholder="Your username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-password" placeholder="Your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-primary" onclick="doLogin()">Sign In</button>
       <div id="login-error" class="msg error" style="display:none"></div>
     </div>
     <div id="register-form" style="display:none">
-      <div class="form-group"><label>Your Name</label><input type="text" id="reg-name" placeholder="Your full name"></div>
-      <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="Choose a unique username" autocomplete="username"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="Min 4 characters" autocomplete="new-password"></div>
-      <div class="form-group"><label>Invite Code</label><input type="text" id="reg-token" placeholder="Required for access"></div>
+      <div class="form-group"><label>Your Name</label><input type="text" id="reg-name" placeholder="Your full name" onkeydown="if(event.key==='Enter')document.getElementById('reg-username').focus()"></div>
+      <div class="form-group"><label>Username</label><input type="text" id="reg-username" placeholder="Choose a unique username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('reg-password').focus()"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="reg-password" placeholder="Min 4 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')document.getElementById('reg-token').focus()"></div>
+      <div class="form-group"><label>Invite Code</label><input type="text" id="reg-token" placeholder="Required for access" onkeydown="if(event.key==='Enter')doRegister()"></div>
       <button class="btn btn-primary" onclick="doRegister()">Create Account</button>
       <div id="reg-msg" class="msg"></div>
     </div>
     <div id="changepass-form" style="display:none">
-      <div class="form-group"><label>Username</label><input type="text" id="cp-username" placeholder="Your username" autocomplete="username"></div>
-      <div class="form-group"><label>Current Password</label><input type="password" id="cp-current" placeholder="Your current password" autocomplete="current-password"></div>
-      <div class="form-group"><label>New Password</label><input type="password" id="cp-new" placeholder="Min 4 characters" autocomplete="new-password"></div>
-      <div class="form-group"><label>Confirm New Password</label><input type="password" id="cp-confirm" placeholder="Retype new password" autocomplete="off" onpaste="return false" oncontextmenu="return false"></div>
+      <div class="form-group"><label>Username</label><input type="text" id="cp-username" placeholder="Your username" autocomplete="username" onkeydown="if(event.key==='Enter')document.getElementById('cp-current').focus()"></div>
+      <div class="form-group"><label>Current Password</label><input type="password" id="cp-current" placeholder="Your current password" autocomplete="current-password" onkeydown="if(event.key==='Enter')document.getElementById('cp-new').focus()"></div>
+      <div class="form-group"><label>New Password</label><input type="password" id="cp-new" placeholder="Min 4 characters" autocomplete="new-password" onkeydown="if(event.key==='Enter')document.getElementById('cp-confirm').focus()"></div>
+      <div class="form-group"><label>Confirm New Password</label><input type="password" id="cp-confirm" placeholder="Retype new password" autocomplete="off" onpaste="return false" oncontextmenu="return false" onkeydown="if(event.key==='Enter')doChangePassword()"></div>
       <button class="btn btn-primary" onclick="doChangePassword()">Change Password</button>
       <div id="cp-msg" class="msg"></div>
     </div>
@@ -896,10 +897,10 @@ function renderHomeBottomSection(newIds) {
         <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem">Browse &amp; vote</div>
         <span style="color:var(--teal-light);font-size:1.1rem;margin-top:0.6rem">›</span>
       </div>
-      <div class="home-square-tile home-new-movies-tile">
+      <div class="home-square-tile home-new-movies-tile" onclick="document.getElementById('home-bottom-section').querySelector('.home-new-movies-block').scrollIntoView({behavior:'smooth',block:'start'})">
         <span style="font-size:1.6rem">✨</span>
         <div class="home-block-title" style="margin-top:0.5rem">${count} New Movie${count!==1?'s':''}</div>
-        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem">to rate — see below</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem">tap to review ↓</div>
       </div>
     </div>
     <div class="home-new-movies-block" style="margin-bottom:1rem">
