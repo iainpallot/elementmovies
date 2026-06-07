@@ -264,6 +264,10 @@
   .ack-ok-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 6px; padding: 0.2rem 0.55rem; font-size: 0.7rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
   .ack-ok-btn:hover { border-color: var(--teal); color: var(--teal-light); }
   .ack-ok-btn.acked { color: var(--teal); border-color: rgba(27,122,122,0.4); }
+  .home-bottom-row { display: flex; gap: 0.75rem; margin-bottom: 1rem; }
+  .home-square-tile { flex: 1; aspect-ratio: 1; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1rem; cursor: pointer; transition: border-color 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .home-square-tile:hover { border-color: rgba(27,122,122,0.4); }
+  .home-new-movies-tile { background: linear-gradient(135deg, rgba(27,122,122,0.15), rgba(27,122,122,0.05)); border-color: rgba(27,122,122,0.3) !important; }
 </style>
 </head>
 <body>
@@ -395,21 +399,10 @@
         <p style="margin-top:0.5rem;color:var(--teal-light)">Enjoy — and see you there most Sunday nights!</p>
       </div>
 
-      <div class="section-title" style="margin-bottom:0.5rem">🎟️ Next Screening</div>
-      <div id="home-next-screening" onclick="showPage('screenings')" style="cursor:pointer;margin-bottom:1.1rem">
+      <div id="home-next-screening" onclick="showPage('screenings')" style="cursor:pointer;margin-bottom:1rem">
         <div class="home-block-card" style="margin-bottom:0"><div class="inline-loading"><div class="spinner"></div></div></div>
       </div>
-
-      <div id="home-new-movies" style="margin-bottom:0.25rem"></div>
-
-      <div class="home-library-card" onclick="showPage('library')">
-        <span style="font-size:2rem;line-height:1">🎬</span>
-        <div style="flex:1">
-          <div class="home-block-title">Movie Library</div>
-          <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.2rem">Browse &amp; vote on all proposed films</div>
-        </div>
-        <span style="color:var(--teal-light);font-size:1.2rem">›</span>
-      </div>
+      <div id="home-bottom-section"></div>
     </div>
 
     <!-- DETAIL -->
@@ -803,7 +796,7 @@ function renderHomeDashboard() {
     localStorage.setItem('em_acknowledgedMovieIds', '[]');
   }
   renderHomeNextScreening();
-  renderHomeNewMovies(newIds);
+  renderHomeBottomSection(newIds);
 }
 
 function renderHomeNextScreening() {
@@ -850,22 +843,25 @@ function renderHomeNextScreening() {
     </div>`;
 }
 
-function renderHomeNewMovies(newIds) {
-  const el = document.getElementById('home-new-movies');
+function renderHomeBottomSection(newIds) {
+  const el = document.getElementById('home-bottom-section');
   if (!el) return;
 
   if (!newIds || !newIds.length) {
+    // No new movies — library takes full width
     el.innerHTML = `
-      <div class="home-new-movies-block">
-        <div class="home-block-title" style="margin-bottom:0.65rem">✨ New Movies to Rate</div>
-        <div style="font-size:0.85rem;color:var(--text-dim);text-align:center;padding:0.5rem 0">
-          <span style="font-size:1.4rem;display:block;margin-bottom:0.3rem">✓</span>
-          All up to date — no new movies since your last visit
+      <div class="home-library-card" onclick="showPage('library')">
+        <span style="font-size:2rem;line-height:1">🎬</span>
+        <div style="flex:1">
+          <div class="home-block-title">Movie Library</div>
+          <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.2rem">Browse &amp; vote on all proposed films</div>
         </div>
+        <span style="color:var(--teal-light);font-size:1.2rem">›</span>
       </div>`;
     return;
   }
 
+  // New movies present — library and new movies squares side by side, list below
   const newMovies = newIds.map(id => allMovies.find(m => m.movie_id === id)).filter(Boolean);
   const count = newMovies.length;
 
@@ -893,7 +889,20 @@ function renderHomeNewMovies(newIds) {
   }).join('');
 
   el.innerHTML = `
-    <div class="home-new-movies-block">
+    <div class="home-bottom-row">
+      <div class="home-square-tile" onclick="showPage('library')">
+        <span style="font-size:2rem">🎬</span>
+        <div class="home-block-title" style="margin-top:0.5rem">Movie Library</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem">Browse &amp; vote</div>
+        <span style="color:var(--teal-light);font-size:1.1rem;margin-top:0.6rem">›</span>
+      </div>
+      <div class="home-square-tile home-new-movies-tile">
+        <span style="font-size:1.6rem">✨</span>
+        <div class="home-block-title" style="margin-top:0.5rem">${count} New Movie${count!==1?'s':''}</div>
+        <div style="font-size:0.75rem;color:var(--text-dim);margin-top:0.2rem">to rate — see below</div>
+      </div>
+    </div>
+    <div class="home-new-movies-block" style="margin-bottom:1rem">
       <div class="home-block-header">
         <div class="home-block-title">✨ ${count} New Movie${count!==1?'s':''} to Rate</div>
         <button id="ack-all-btn" onclick="acknowledgeAllNewMovies()"
@@ -901,7 +910,7 @@ function renderHomeNewMovies(newIds) {
           Acknowledge all
         </button>
       </div>
-      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem">Tap a movie to vote &middot; OK to mark seen (disappears on next visit)</div>
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem">Tap a movie to vote · OK to mark seen (disappears on next visit)</div>
       ${rows}
     </div>`;
 }
