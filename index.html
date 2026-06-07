@@ -451,6 +451,10 @@
           <div id="add-screening-form" style="display:none;background:var(--surface2);border:1px solid rgba(27,122,122,0.3);border-radius:10px;padding:0.85rem;margin-bottom:1rem">
             <div class="section-title" id="screening-form-title" style="margin-bottom:0.75rem">Schedule a screening</div>
             <select class="movie-select" id="screening-movie-select"><option value="">Select a movie…</option></select>
+            <div class="form-row" style="margin-bottom:0.3rem">
+              <label style="flex:1;font-size:0.72rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim)">Date</label>
+              <label style="flex:1;font-size:0.72rem;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-dim)">Time</label>
+            </div>
             <div class="form-row" style="margin-bottom:0.6rem">
               <input type="date" id="screening-date" style="padding:0.65rem 0.9rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;flex:1;color-scheme:dark;">
               <input type="time" id="screening-time" value="18:00" style="padding:0.65rem 0.9rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.9rem;outline:none;flex:1;color-scheme:dark;">
@@ -1988,6 +1992,33 @@ async function addMovie() {
 }
 
 // ── ADMIN SCREENING MANAGEMENT ──
+function getNextScreeningDefault() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  // Find the latest scheduled screening date
+  const scheduledDates = (allScreenings || [])
+    .filter(s => s.status === 'scheduled')
+    .map(s => new Date(s.date + 'T00:00:00'))
+    .filter(d => !isNaN(d.getTime()));
+  let base;
+  if (scheduledDates.length) {
+    base = new Date(Math.max(...scheduledDates));
+    base.setDate(base.getDate() + 1); // start search the day after the last screening
+  } else {
+    base = new Date(today);
+  }
+  // Advance to next Sunday (0 = Sunday)
+  const dow = base.getDay();
+  base.setDate(base.getDate() + (dow === 0 ? 0 : 7 - dow));
+  // Must not be in the past
+  if (base < today) {
+    const tod = today.getDay();
+    base = new Date(today);
+    base.setDate(today.getDate() + (tod === 0 ? 7 : 7 - tod));
+  }
+  return base.toISOString().split('T')[0];
+}
+
 function toggleAddScreening() {
   const form = document.getElementById('add-screening-form');
   const btn = document.getElementById('add-screening-toggle');
@@ -1999,7 +2030,7 @@ function toggleAddScreening() {
     document.getElementById('screening-submit-btn').textContent = 'Schedule';
     document.getElementById('editing-screening-id').value = '';
     document.getElementById('screening-movie-select').value = '';
-    document.getElementById('screening-date').value = '';
+    document.getElementById('screening-date').value = getNextScreeningDefault();
     document.getElementById('screening-date').min = new Date().toISOString().split('T')[0];
     document.getElementById('screening-time').value = '18:00';
   }
