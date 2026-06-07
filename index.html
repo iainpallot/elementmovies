@@ -250,6 +250,20 @@
   .accordion-body.open { display: block; }
 
   .divider-label { font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0.75rem 0 0.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
+
+  /* ── Home dashboard ── */
+  .home-welcome-card { background: var(--surface); border: 1px solid rgba(27,122,122,0.2); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.25rem; font-size: 0.84rem; color: var(--text-dim); line-height: 1.7; }
+  .home-block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.1rem; cursor: pointer; transition: border-color 0.2s; }
+  .home-block-card:hover { border-color: rgba(27,122,122,0.4); }
+  .home-block-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem; }
+  .home-block-title { font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--teal); }
+  .home-new-movies-block { background: linear-gradient(135deg, rgba(27,122,122,0.12), rgba(27,122,122,0.04)); border: 1px solid rgba(27,122,122,0.25); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.1rem; }
+  .home-library-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.1rem; cursor: pointer; transition: border-color 0.2s; display: flex; align-items: center; gap: 0.85rem; }
+  .home-library-card:hover { border-color: rgba(27,122,122,0.4); }
+  .new-movie-row-ack { opacity: 0.35; }
+  .ack-ok-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 6px; padding: 0.2rem 0.55rem; font-size: 0.7rem; cursor: pointer; font-family: 'DM Sans', sans-serif; white-space: nowrap; flex-shrink: 0; transition: all 0.15s; }
+  .ack-ok-btn:hover { border-color: var(--teal); color: var(--teal-light); }
+  .ack-ok-btn.acked { color: var(--teal); border-color: rgba(27,122,122,0.4); }
 </style>
 </head>
 <body>
@@ -372,16 +386,40 @@
       <div id="home-movies-list"><div class="inline-loading"><div class="spinner"></div> Loading movies…</div></div>
     </div>
 
+    <!-- HOME DASHBOARD -->
+    <div class="page" id="page-home">
+      <div class="home-welcome-card">
+        <p style="color:var(--text);font-size:0.9rem;font-family:'Playfair Display',serif;margin-bottom:0.5rem">Welcome to Movie Night 🎬</p>
+        <p>This is the Fullerton Cove community cinema space. Here you can see upcoming screenings and make a booking, and browse all movies proposed for the big screen.</p>
+        <p style="margin-top:0.5rem">Not every movie will get screened — so the community vote matters. Score any movie to have your say; the community score is the average of all votes. You can also suggest movies for the community to consider, and newly suggested movies are highlighted here each time you sign in so you can vote before the next screening.</p>
+        <p style="margin-top:0.5rem;color:var(--teal-light)">Enjoy — and see you there most Sunday nights!</p>
+      </div>
+
+      <div class="section-title" style="margin-bottom:0.5rem">🎟️ Next Screening</div>
+      <div id="home-next-screening" onclick="showPage('screenings')" style="cursor:pointer;margin-bottom:1.1rem">
+        <div class="home-block-card" style="margin-bottom:0"><div class="inline-loading"><div class="spinner"></div></div></div>
+      </div>
+
+      <div id="home-new-movies" style="margin-bottom:0.25rem"></div>
+
+      <div class="home-library-card" onclick="showPage('library')">
+        <span style="font-size:2rem;line-height:1">🎬</span>
+        <div style="flex:1">
+          <div class="home-block-title">Movie Library</div>
+          <div style="font-size:0.82rem;color:var(--text-dim);margin-top:0.2rem">Browse &amp; vote on all proposed films</div>
+        </div>
+        <span style="color:var(--teal-light);font-size:1.2rem">›</span>
+      </div>
+    </div>
+
     <!-- DETAIL -->
     <div class="page" id="page-detail">
-      <button class="detail-back" onclick="goBack()">← Back to Home</button>
+      <button class="detail-back" onclick="goBack()">← Back</button>
       <div id="detail-content"></div>
     </div>
 
     <!-- SCREENINGS -->
     <div class="page" id="page-screenings">
-      
-      <div id="new-movies-banner" style="display:none"></div>
       <div id="screenings-list"><div class="inline-loading"><div class="spinner"></div> Loading…</div></div>
     </div>
 
@@ -476,7 +514,8 @@
   </div>
 
   <nav class="bottom-nav">
-    <button class="nav-item active" id="nav-screenings" onclick="showPage('screenings')"><span class="nav-icon">🎟️</span>Home</button>
+    <button class="nav-item active" id="nav-home" onclick="showPage('home')"><span class="nav-icon">🏠</span>Home</button>
+    <button class="nav-item" id="nav-screenings" onclick="showPage('screenings')"><span class="nav-icon">🎟️</span>Screenings</button>
     <button class="nav-item" id="nav-library" onclick="showPage('library')"><span class="nav-icon">🎬</span>Library</button>
     <button class="nav-item" id="nav-admin" onclick="showPage('admin')" style="display:none"><span class="nav-icon">⚙️</span>Admin</button>
   </nav>
@@ -484,7 +523,7 @@
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbwN5ABiNIn1snW3euBEBQWijW-DyQpV0KdEJsS6l9W5HOSD4fHEtdMBoM5yx7figEX7Bw/exec";
-let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'screenings';
+let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'home';
 let pendingBooking = null;
 
 // ── LOADER ──
@@ -607,29 +646,54 @@ function startApp() {
   document.getElementById('header-greeting').textContent = `Welcome, ${session.name.split(' ')[0].toUpperCase()}`;
   if (session.is_admin) document.getElementById('nav-admin').style.display = 'flex';
   window.scrollTo(0, 0);
-  // Track last visit for new-movies banner
-  const today = new Date().toISOString().split('T')[0];
-  window._lastVisitDate = localStorage.getItem('em_lastVisit');
-  localStorage.setItem('em_lastVisit', new Date().toISOString());
-  // Preload movies and our services on login
+
+  const lastVisit = localStorage.getItem('em_lastVisit');
+
+  // Preload everything needed for the home dashboard
   Promise.all([
     api('getMovies').then(r => { if (r.ok) allMovies = r.movies; }),
+    api('getScreenings').then(r => { if (r.ok) allScreenings = r.screenings; }),
     api('getOurServices').then(r => { if (r.ok) ourServicesCache = r.services; })
-  ]).then(() => { renderNewMoviesBanner(); });
-  showPage('screenings');
+  ]).then(() => {
+    // Compute new movies since last visit
+    if (lastVisit) {
+      const lastVisitTime = new Date(lastVisit).getTime();
+      let newIds = JSON.parse(localStorage.getItem('em_newMovieIds') || '[]');
+      const ackedIds = JSON.parse(localStorage.getItem('em_acknowledgedMovieIds') || '[]');
+      // Clean out already-acknowledged IDs
+      newIds = newIds.filter(id => !ackedIds.includes(id));
+      // Add any movies added since last visit
+      allMovies.forEach(m => {
+        if (m.added_date && !newIds.includes(m.movie_id)) {
+          if (new Date(m.added_date).getTime() > lastVisitTime) newIds.push(m.movie_id);
+        }
+      });
+      localStorage.setItem('em_newMovieIds', JSON.stringify(newIds));
+      localStorage.setItem('em_acknowledgedMovieIds', '[]');
+    }
+    // Update last visit timestamp now that we've captured new movies
+    localStorage.setItem('em_lastVisit', new Date().toISOString());
+    renderHomeDashboard();
+  });
+
+  showPage('home');
 }
 
 // ── NAV ──
 function showPage(page) {
-  if (page !== 'detail') prevPage = document.querySelector('.page.active')?.id?.replace('page-', '') || 'screenings';
+  if (page !== 'detail') prevPage = document.querySelector('.page.active')?.id?.replace('page-', '') || 'home';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById(`page-${page}`).classList.add('active');
   const navEl = document.getElementById(`nav-${page}`);
   if (navEl) navEl.classList.add('active');
-  const titles = { screenings: 'Home', library: 'Library', detail: '', admin: 'Admin' };
+  const titles = { home: 'Home', screenings: 'Screenings', library: 'Library', detail: '', admin: 'Admin' };
   document.getElementById('header-page').textContent = titles[page] ?? '';
   window.scrollTo(0, 0);
+  if (page === 'home') {
+    if (allMovies.length) renderHomeDashboard();
+    // else renderHomeDashboard() is called after Promise.all in startApp()
+  }
   if (page === 'screenings') {
     if (!allMovies.length) {
       api('getMovies').then(r => { if (r.ok) allMovies = r.movies; loadScreenings(); });
@@ -728,42 +792,150 @@ function sortHome(by) {
   renderHomeMovies();
 }
 
-// ── NEW MOVIES BANNER ──
-function renderNewMoviesBanner() {
-  const banner = document.getElementById('new-movies-banner');
-  if (!banner) return;
-  const lastVisit = window._lastVisitDate;
-  // First-ever visit: no banner, just set the baseline for next time
-  if (!lastVisit) { banner.style.display = 'none'; return; }
-  const lastVisitTime = lastVisit ? new Date(lastVisit).getTime() : null;
-  const newMovies = allMovies.filter(m => m.added_date && lastVisitTime && new Date(m.added_date).getTime() > lastVisitTime);
-  if (!newMovies.length) { banner.style.display = 'none'; return; }
+// ── HOME DASHBOARD ──
+function renderHomeDashboard() {
+  // On every home load: flush acknowledged movies out of the persistent new-movies list
+  let newIds = JSON.parse(localStorage.getItem('em_newMovieIds') || '[]');
+  const ackedIds = JSON.parse(localStorage.getItem('em_acknowledgedMovieIds') || '[]');
+  if (ackedIds.length) {
+    newIds = newIds.filter(id => !ackedIds.includes(id));
+    localStorage.setItem('em_newMovieIds', JSON.stringify(newIds));
+    localStorage.setItem('em_acknowledgedMovieIds', '[]');
+  }
+  renderHomeNextScreening();
+  renderHomeNewMovies(newIds);
+}
 
-  const rows = newMovies.map((m, i) => {
+function renderHomeNextScreening() {
+  const el = document.getElementById('home-next-screening');
+  if (!el) return;
+  const today = new Date().toISOString().split('T')[0];
+  const next = allScreenings
+    .filter(s => s.date >= today && s.status === 'scheduled')
+    .sort((a, b) => a.date.localeCompare(b.date))[0];
+
+  if (!next) {
+    el.innerHTML = `
+      <div class="home-block-card" style="margin-bottom:0;text-align:center;padding:1.5rem 1.2rem">
+        <div style="font-size:2rem;margin-bottom:0.4rem">📅</div>
+        <div style="color:var(--text-dim);font-size:0.88rem">No upcoming screenings yet — check back soon!</div>
+      </div>`;
+    return;
+  }
+
+  const movie = allMovies.find(m => m.movie_id === next.movie_id) || {};
+  const dateStr = new Date(next.date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'long', day: 'numeric', month: 'long' });
+  const statusPill = next.my_booking
+    ? `<span class="status-pill pill-booked" style="font-size:0.72rem">✓ Booked</span>`
+    : next.my_waitlist
+    ? `<span class="status-pill pill-waitlist" style="font-size:0.72rem">⏳ Waitlisted</span>`
+    : `<span style="font-size:0.78rem;color:var(--text-dim)">Not booked yet</span>`;
+
+  el.innerHTML = `
+    <div class="home-block-card" style="margin-bottom:0">
+      <div class="home-block-header" style="margin-bottom:0.65rem">
+        <div class="home-block-title">🎟️ Next Screening</div>
+        <span style="font-size:0.74rem;color:var(--text-dim)">Tap to book →</span>
+      </div>
+      <div style="display:flex;gap:0.85rem;align-items:flex-start">
+        ${movie.poster_url
+          ? `<img src="${movie.poster_url}" style="width:60px;height:88px;border-radius:8px;object-fit:cover;flex-shrink:0" onerror="this.style.display='none'">`
+          : `<div style="width:60px;height:88px;border-radius:8px;background:var(--surface2);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1.5rem">🎬</div>`}
+        <div style="flex:1;min-width:0">
+          <div style="font-family:'Playfair Display',serif;font-size:1.05rem;margin-bottom:0.2rem">${next.movie_title}</div>
+          <div style="font-size:0.78rem;color:var(--text-dim);margin-bottom:0.5rem">${dateStr} · ${next.time}</div>
+          ${statusPill}
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderHomeNewMovies(newIds) {
+  const el = document.getElementById('home-new-movies');
+  if (!el) return;
+
+  if (!newIds || !newIds.length) {
+    el.innerHTML = `
+      <div class="home-new-movies-block">
+        <div class="home-block-title" style="margin-bottom:0.65rem">✨ New Movies to Rate</div>
+        <div style="font-size:0.85rem;color:var(--text-dim);text-align:center;padding:0.5rem 0">
+          <span style="font-size:1.4rem;display:block;margin-bottom:0.3rem">✓</span>
+          All up to date — no new movies since your last visit
+        </div>
+      </div>`;
+    return;
+  }
+
+  const newMovies = newIds.map(id => allMovies.find(m => m.movie_id === id)).filter(Boolean);
+  const count = newMovies.length;
+
+  const rows = newMovies.map(m => {
     const poster = m.poster_url
       ? `<img class="movie-row-poster" src="${m.poster_url}" onerror="this.outerHTML='<div class=movie-row-poster-placeholder>🎬</div>'">`
       : `<div class="movie-row-poster-placeholder">🎬</div>`;
     return `
-    <div class="movie-row" style="animation-delay:${i*0.03}s" onclick="showDetail('${m.movie_id}')">
-      ${poster}
-      <div class="movie-row-info">
-        <div class="movie-row-title">${m.title}</div>
-        <div class="movie-row-actor">${m.lead_actor||''}</div>
+    <div class="movie-row" id="new-row-${m.movie_id}" style="margin-bottom:0.4rem">
+      <div onclick="showDetailFromNew('${m.movie_id}')" style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:0;cursor:pointer">
+        ${poster}
+        <div class="movie-row-info">
+          <div class="movie-row-title">${m.title}</div>
+          <div class="movie-row-actor">${m.lead_actor||''}</div>
+        </div>
+        <div class="movie-row-scores">
+          ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
+        </div>
       </div>
-      <div class="movie-row-scores">
-        ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
-        ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
-      </div>
+      <button class="ack-ok-btn" id="ack-btn-${m.movie_id}"
+        onclick="event.stopPropagation();acknowledgeMovie('${m.movie_id}',this)"
+        title="Mark as seen — removes from this list next time">OK</button>
     </div>`;
   }).join('');
 
-  banner.innerHTML = `
-    <div style="background:linear-gradient(135deg,rgba(27,122,122,0.15),rgba(27,122,122,0.05));border:1px solid rgba(27,122,122,0.3);border-radius:12px;padding:1rem 1.1rem;margin-bottom:1.25rem">
-      <div class="section-title" style="margin-bottom:0.75rem">✦ New movie suggestions for you to vote on</div>
+  el.innerHTML = `
+    <div class="home-new-movies-block">
+      <div class="home-block-header">
+        <div class="home-block-title">✨ ${count} New Movie${count!==1?'s':''} to Rate</div>
+        <button id="ack-all-btn" onclick="acknowledgeAllNewMovies()"
+          style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:0.2rem 0.6rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s">
+          Acknowledge all
+        </button>
+      </div>
+      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem">Tap a movie to vote &middot; OK to mark seen (disappears on next visit)</div>
       ${rows}
-      <button onclick="showPage('library')" style="width:100%;margin-top:0.75rem;padding:0.5rem;background:transparent;border:1px solid rgba(27,122,122,0.3);border-radius:8px;color:var(--teal-light);font-family:'DM Sans',sans-serif;font-size:0.8rem;cursor:pointer;letter-spacing:0.04em">View full library →</button>
     </div>`;
-  banner.style.display = 'block';
+}
+
+function showDetailFromNew(movieId) {
+  // Acknowledge on click — movie leaves the new list when home reloads
+  let acked = JSON.parse(localStorage.getItem('em_acknowledgedMovieIds') || '[]');
+  if (!acked.includes(movieId)) { acked.push(movieId); localStorage.setItem('em_acknowledgedMovieIds', JSON.stringify(acked)); }
+  showDetail(movieId);
+}
+
+function acknowledgeMovie(movieId, btn) {
+  let acked = JSON.parse(localStorage.getItem('em_acknowledgedMovieIds') || '[]');
+  if (!acked.includes(movieId)) { acked.push(movieId); localStorage.setItem('em_acknowledgedMovieIds', JSON.stringify(acked)); }
+  if (btn) { btn.textContent = '✓ OK'; btn.classList.add('acked'); }
+  const row = document.getElementById(`new-row-${movieId}`);
+  if (row) row.classList.add('new-movie-row-ack');
+}
+
+function acknowledgeAllNewMovies() {
+  const newIds = JSON.parse(localStorage.getItem('em_newMovieIds') || '[]');
+  localStorage.setItem('em_acknowledgedMovieIds', JSON.stringify(newIds));
+  newIds.forEach(id => {
+    const row = document.getElementById(`new-row-${id}`);
+    if (row) row.classList.add('new-movie-row-ack');
+    const btn = document.getElementById(`ack-btn-${id}`);
+    if (btn) { btn.textContent = '✓ OK'; btn.classList.add('acked'); }
+  });
+  const ackAllBtn = document.getElementById('ack-all-btn');
+  if (ackAllBtn) {
+    ackAllBtn.textContent = '✓ All acknowledged';
+    ackAllBtn.style.color = 'var(--teal-light)';
+    ackAllBtn.style.borderColor = 'rgba(27,122,122,0.4)';
+  }
 }
 
 function renderHomeMovies() {
