@@ -393,11 +393,16 @@
 
     <!-- HOME DASHBOARD -->
     <div class="page" id="page-home">
-      <div class="home-welcome-card">
-        <p style="color:var(--text);font-size:0.9rem;font-family:'Playfair Display',serif;margin-bottom:0.5rem">Welcome to Movie Night 🎬</p>
-        <p>This is the Fullerton Cove community cinema space. Here you can see upcoming screenings and make a booking, and browse all movies proposed for the big screen.</p>
-        <p style="margin-top:0.5rem">Not every movie will get screened — so the community vote matters. Score any movie to have your say; the community score is the average of all votes. You can also suggest movies for the community to consider, and newly suggested movies are highlighted here each time you sign in so you can vote before the next screening.</p>
-        <p style="margin-top:0.5rem;color:var(--teal-light)">Enjoy — and see you there most Sunday nights!</p>
+      <div class="home-welcome-card" id="home-welcome-card">
+        <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:0.5rem">
+          <p style="color:var(--text);font-size:0.9rem;font-family:'Playfair Display',serif">Welcome to Movie Night 🎬</p>
+          <button id="welcome-toggle" onclick="toggleWelcome()" style="background:none;border:none;color:var(--teal-light);font-size:0.75rem;cursor:pointer;font-family:'DM Sans',sans-serif;padding:0;white-space:nowrap;margin-left:0.75rem;flex-shrink:0"></button>
+        </div>
+        <div id="welcome-body">
+          <p>This is the Fullerton Cove community cinema space. Here you can see upcoming screenings and make a booking, and browse all movies proposed for the big screen.</p>
+          <p style="margin-top:0.5rem">Not every movie will get screened — so the community vote matters. Score any movie to have your say; the community score is the average of all votes. You can also suggest movies for the community to consider, and newly suggested movies are highlighted here each time you sign in so you can vote before the next screening.</p>
+          <p style="margin-top:0.5rem;color:var(--teal-light)">Enjoy — and see you there most Sunday nights!</p>
+        </div>
       </div>
 
       <div id="home-next-screening" onclick="showPage('screenings')" style="cursor:pointer;margin-bottom:1rem">
@@ -801,6 +806,33 @@ function renderHomeDashboard() {
   }
   renderHomeNextScreening();
   renderHomeBottomSection(newIds);
+  initWelcomeCard();
+}
+
+function initWelcomeCard() {
+  const body = document.getElementById('welcome-body');
+  const btn = document.getElementById('welcome-toggle');
+  if (!body || !btn) return;
+  const seen = localStorage.getItem('em_welcomeSeen');
+  if (seen) {
+    // Returning visitor — start collapsed
+    body.style.display = 'none';
+    btn.textContent = 'Read more ▾';
+  } else {
+    // First visit — show expanded, mark as seen
+    body.style.display = '';
+    btn.textContent = 'Read less ▴';
+    localStorage.setItem('em_welcomeSeen', '1');
+  }
+}
+
+function toggleWelcome() {
+  const body = document.getElementById('welcome-body');
+  const btn = document.getElementById('welcome-toggle');
+  if (!body || !btn) return;
+  const collapsed = body.style.display === 'none';
+  body.style.display = collapsed ? '' : 'none';
+  btn.textContent = collapsed ? 'Read less ▴' : 'Read more ▾';
 }
 
 function renderHomeNextScreening() {
