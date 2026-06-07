@@ -821,12 +821,13 @@ function initWelcomeCard() {
   const btn = document.getElementById('welcome-toggle');
   if (!body || !btn) return;
   const seen = localStorage.getItem('em_welcomeSeen');
-  if (seen) {
-    // Returning visitor — start collapsed
+  // Treat as returning if localStorage says so OR if user has voted on any movie
+  // (voting survives cache clears because it's server-side data)
+  const hasVoted = allMovies && allMovies.some(m => m.my_score);
+  if (seen || hasVoted) {
     body.style.display = 'none';
     btn.textContent = 'Read more ▾';
   } else {
-    // First visit — show expanded, mark as seen
     body.style.display = '';
     btn.textContent = 'Read less ▴';
     localStorage.setItem('em_welcomeSeen', '1');
@@ -1126,8 +1127,8 @@ function showDetail(movie_id) {
   loadDetailSynopsis(m.movie_id, m.title);
 }
 
-async function loadDetailSynopsis(movieId, title) {
-  const el = document.getElementById(`detail-synopsis-${movieId}`);
+async function loadSynopsis(elId, title) {
+  const el = document.getElementById(elId);
   if (!el) return;
   // Try TMDB first — fuzzy title match, much more reliable than OMDb
   try {
@@ -1154,6 +1155,9 @@ async function loadDetailSynopsis(movieId, title) {
     }
   } catch (e) {}
 }
+
+// Alias used by showDetail()
+function loadDetailSynopsis(movieId, title) { loadSynopsis(`detail-synopsis-${movieId}`, title); }
 
 async function castVote(movie_id, score, btn) {
   const msgEl = document.getElementById(`vote-msg-${movie_id}`);
@@ -1206,6 +1210,8 @@ async function loadScreenings() {
   });
 
   list.innerHTML = future.map((s,i) => screeningCardHTML(s,i)).join('');
+  // Lazy-load synopses for each card
+  future.forEach(s => loadSynopsis(`screening-synopsis-${s.screening_id}`, s.movie_title));
 }
 
 function screeningCardHTML(s, i) {
@@ -1248,6 +1254,7 @@ function screeningCardHTML(s, i) {
         </div>
       </div>
     </div>
+    <div id="screening-synopsis-${s.screening_id}" style="font-size:0.84rem;color:var(--text-dim);line-height:1.6;margin:0.5rem 0 0.75rem;display:none"></div>
     <div class="seats-info">
       <div class="seats-count"><strong>${s.seats_left}</strong> of ${s.max_seats} seats left${s.on_waitlist>0?` · ${s.on_waitlist} waitlisted`:''}</div>
       <div class="seats-bar"><div class="seats-bar-fill ${fillClass}" style="width:${pct}%"></div></div>
