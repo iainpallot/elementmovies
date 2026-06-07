@@ -569,7 +569,7 @@ async function doLogin() {
   const res = await api('login', { username, password });
   hideLoader();
   if (res.ok) {
-    session = { member_id: res.member_id, name: res.name, is_admin: res.is_admin };
+    session = { member_id: res.member_id, name: res.name, is_admin: res.is_admin === true || res.is_admin === 'TRUE' };
     localStorage.setItem('em_session', JSON.stringify(session));
     startApp();
   } else {
