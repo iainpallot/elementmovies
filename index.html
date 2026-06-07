@@ -654,19 +654,26 @@ function startApp() {
     api('getScreenings').then(r => { if (r.ok) allScreenings = r.screenings; }),
     api('getOurServices').then(r => { if (r.ok) ourServicesCache = r.services; })
   ]).then(() => {
-    // Compute new movies since last visit
-    // Default to 30 days ago on a fresh device so recently-added movies still surface
+    // Compute new movies since last visit.
+    // A movie is "new" only if: added recently AND the user hasn't voted on it yet.
+    // Voting is the definitive "I know about this movie" signal — rated movies are never shown.
+    // On a fresh device (no lastVisit), default to 14 days so we don't flood the screen.
     const lastVisitTime = lastVisit
       ? new Date(lastVisit).getTime()
-      : Date.now() - 30 * 24 * 60 * 60 * 1000;
+      : Date.now() - 14 * 24 * 60 * 60 * 1000;
     {
       let newIds = JSON.parse(localStorage.getItem('em_newMovieIds') || '[]');
       const ackedIds = JSON.parse(localStorage.getItem('em_acknowledgedMovieIds') || '[]');
       // Clean out already-acknowledged IDs
       newIds = newIds.filter(id => !ackedIds.includes(id));
-      // Add any movies added since last visit
+      // Remove any IDs the user has since rated (rated = they know about it)
+      newIds = newIds.filter(id => {
+        const m = allMovies.find(x => x.movie_id === id);
+        return m && !m.my_score;
+      });
+      // Add movies added since last visit that the user hasn't rated
       allMovies.forEach(m => {
-        if (m.added_date && !newIds.includes(m.movie_id)) {
+        if (m.added_date && !m.my_score && !newIds.includes(m.movie_id)) {
           if (new Date(m.added_date).getTime() > lastVisitTime) newIds.push(m.movie_id);
         }
       });
@@ -1122,14 +1129,30 @@ function showDetail(movie_id) {
 async function loadDetailSynopsis(movieId, title) {
   const el = document.getElementById(`detail-synopsis-${movieId}`);
   if (!el) return;
+  // Try TMDB first — fuzzy title match, much more reliable than OMDb
   try {
-    const res = await fetch(`https://www.omdbapi.com/?apikey=ed1ed939&t=${encodeURIComponent(title)}&plot=short`);
-    const data = await res.json();
-    if (data && data.Plot && data.Plot !== 'N/A') {
-      el.textContent = data.Plot;
+    const tmdbRes = await fetch(
+      `https://api.themoviedb.org/3/search/movie?api_key=0e0ec3c6d62df378f31f7ddb78a83b49&query=${encodeURIComponent(title)}&language=en-AU`
+    );
+    if (tmdbRes.ok) {
+      const tmdbData = await tmdbRes.json();
+      const overview = tmdbData.results?.[0]?.overview;
+      if (overview) {
+        el.textContent = overview;
+        el.style.display = '';
+        return;
+      }
+    }
+  } catch (e) {}
+  // Fallback: OMDb (requires near-exact title, but catches some gaps)
+  try {
+    const omdbRes = await fetch(`https://www.omdbapi.com/?apikey=ed1ed939&t=${encodeURIComponent(title)}&type=movie&plot=short`);
+    const omdbData = await omdbRes.json();
+    if (omdbData?.Plot && omdbData.Plot !== 'N/A') {
+      el.textContent = omdbData.Plot;
       el.style.display = '';
     }
-  } catch (e) { /* silently skip if offline */ }
+  } catch (e) {}
 }
 
 async function castVote(movie_id, score, btn) {
