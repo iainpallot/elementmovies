@@ -251,6 +251,27 @@
 
   .divider-label { font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0.75rem 0 0.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
 
+  /* ── My Bookings slide-out ── */
+  .bookings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(3px); }
+  .bookings-backdrop.open { opacity: 1; pointer-events: all; }
+  .bookings-panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100vw); background: var(--surface); border-left: 1px solid var(--border); z-index: 201; transform: translateX(100%); transition: transform 0.32s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(0,0,0,0.4); }
+  .bookings-panel.open { transform: translateX(0); }
+  .bookings-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+  .bookings-panel-header h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; }
+  .bookings-close-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); width: 32px; height: 32px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .bookings-close-btn:hover { border-color: var(--danger); color: #e74c3c; }
+  .bookings-panel-body { flex: 1; overflow-y: auto; padding: 1rem 1.1rem; }
+  .bookings-item { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 0.85rem 1rem; margin-bottom: 0.65rem; display: flex; gap: 0.75rem; align-items: flex-start; }
+  .bookings-item-poster { width: 44px; height: 64px; border-radius: 6px; object-fit: cover; background: var(--surface); flex-shrink: 0; }
+  .bookings-item-poster-placeholder { width: 44px; height: 64px; border-radius: 6px; background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+  .bookings-item-title { font-family: 'Playfair Display', serif; font-size: 1rem; margin-bottom: 0.2rem; }
+  .bookings-item-date { font-size: 0.78rem; color: var(--text-dim); margin-bottom: 0.45rem; }
+  .bookings-empty { text-align: center; padding: 3rem 1rem; color: var(--text-dim); }
+  .bookings-empty .empty-icon { font-size: 2.5rem; margin-bottom: 0.75rem; }
+  .my-bookings-btn { width: 100%; background: transparent; border: 1px solid var(--border); color: var(--text-dim); border-radius: 10px; padding: 0.65rem 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; cursor: pointer; display: flex; align-items: center; justify-content: space-between; transition: all 0.2s; margin-top: 0.65rem; }
+  .my-bookings-btn:hover { border-color: rgba(27,122,122,0.4); color: var(--text); }
+  .my-bookings-btn .bookings-count-badge { background: var(--teal-dim); color: var(--teal-light); border: 1px solid rgba(27,122,122,0.3); padding: 0.1rem 0.5rem; border-radius: 20px; font-size: 0.76rem; font-weight: 600; }
+
   /* ── Home dashboard ── */
   .home-welcome-card { background: var(--surface); border: 1px solid rgba(27,122,122,0.2); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.25rem; font-size: 0.92rem; color: var(--text-dim); line-height: 1.7; }
   .home-block-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 1.1rem 1.2rem; margin-bottom: 1.1rem; cursor: pointer; transition: border-color 0.2s; }
@@ -405,9 +426,10 @@
         </div>
       </div>
 
-      <div id="home-next-screening" onclick="showPage('screenings')" style="cursor:pointer;margin-bottom:1rem">
+      <div id="home-next-screening" onclick="showPage('screenings')" style="cursor:pointer;margin-bottom:0.5rem">
         <div class="home-block-card" style="margin-bottom:0"><div class="inline-loading"><div class="spinner"></div></div></div>
       </div>
+      <div id="home-mybookings-btn"></div>
       <div id="home-bottom-section"></div>
     </div>
 
@@ -522,6 +544,18 @@
     <button class="nav-item" id="nav-library" onclick="showPage('library')"><span class="nav-icon">🎬</span>Library</button>
     <button class="nav-item" id="nav-admin" onclick="showPage('admin')" style="display:none"><span class="nav-icon">⚙️</span>Admin</button>
   </nav>
+</div>
+
+<!-- My Bookings slide-out -->
+<div class="bookings-backdrop" id="bookings-backdrop" onclick="closeMyBookings()"></div>
+<div class="bookings-panel" id="bookings-panel">
+  <div class="bookings-panel-header">
+    <h2>🎟️ My Bookings</h2>
+    <button class="bookings-close-btn" onclick="closeMyBookings()">✕</button>
+  </div>
+  <div class="bookings-panel-body" id="bookings-panel-body">
+    <div class="inline-loading"><div class="spinner"></div></div>
+  </div>
 </div>
 
 <script>
@@ -778,7 +812,7 @@ function renderNextScreening() {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="showPage('screenings')">Book a Seat</button>`;
   }
 
-  const communityScore = movie.avg_score ? `<span class="badge" style="background:rgba(27,122,122,0.15);color:var(--teal-light);border:1px solid rgba(27,122,122,0.3)">Community ${movie.avg_score}/10</span>` : '';
+  const communityScore = movie.avg_score ? `<span class="badge" style="background:rgba(27,122,122,0.15);color:var(--teal-light);border:1px solid rgba(27,122,122,0.3)">Community ${movie.avg_score}</span>` : '';
 
   el.innerHTML = `
     <div class="next-screening-card">
@@ -816,6 +850,7 @@ function renderHomeDashboard() {
     localStorage.setItem('em_acknowledgedMovieIds', '[]');
   }
   renderHomeNextScreening();
+  renderMyBookingsBtn();
   renderHomeBottomSection(newIds);
   initWelcomeCard();
 }
@@ -929,7 +964,7 @@ function renderHomeBottomSection(newIds) {
           <div class="movie-row-actor">${m.lead_actor||''}</div>
         </div>
         <div class="movie-row-scores">
-          ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.avg_score ? `<div class="community-avg">${m.avg_score}</div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
           ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
         </div>
       </div>
@@ -964,6 +999,89 @@ function renderHomeBottomSection(newIds) {
       <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem">Tap a movie to vote · OK to mark seen (disappears on next visit)</div>
       ${rows}
     </div>`;
+}
+
+// ── MY BOOKINGS SLIDE-OUT ──
+function renderMyBookingsBtn() {
+  const el = document.getElementById('home-mybookings-btn');
+  if (!el) return;
+  const booked = allScreenings.filter(s => s.my_booking || s.my_waitlist);
+  const count = booked.filter(s => s.my_booking).length;
+  const waitCount = booked.filter(s => s.my_waitlist).length;
+  const total = count + waitCount;
+  if (!total) { el.innerHTML = ''; return; }
+  const label = [count && `${count} booking${count!==1?'s':''}`, waitCount && `${waitCount} waitlist`].filter(Boolean).join(' · ');
+  el.innerHTML = `<button class="my-bookings-btn" onclick="openMyBookings()">
+    <span>🎟️ My Bookings</span>
+    <span class="bookings-count-badge">${label}</span>
+  </button>`;
+}
+
+function openMyBookings() {
+  renderMyBookingsPanel();
+  document.getElementById('bookings-panel').classList.add('open');
+  document.getElementById('bookings-backdrop').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeMyBookings() {
+  document.getElementById('bookings-panel').classList.remove('open');
+  document.getElementById('bookings-backdrop').classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function renderMyBookingsPanel() {
+  const el = document.getElementById('bookings-panel-body');
+  if (!el) return;
+
+  const today = new Date().toISOString().split('T')[0];
+  const upcoming = allScreenings.filter(s => s.date >= today && (s.my_booking || s.my_waitlist))
+    .sort((a,b) => a.date.localeCompare(b.date));
+  const past = allScreenings.filter(s => s.date < today && s.my_booking)
+    .sort((a,b) => b.date.localeCompare(a.date));
+
+  if (!upcoming.length && !past.length) {
+    el.innerHTML = `<div class="bookings-empty"><div class="empty-icon">🎟️</div><p>No bookings yet.</p><p style="margin-top:0.5rem;font-size:0.82rem">Head to Screenings to book a seat.</p></div>`;
+    return;
+  }
+
+  const renderItem = (s) => {
+    const movie = allMovies.find(m => m.movie_id === s.movie_id) || {};
+    const dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+    const poster = movie.poster_url
+      ? `<img class="bookings-item-poster" src="${movie.poster_url}" onerror="this.outerHTML='<div class=bookings-item-poster-placeholder>🎬</div>'">`
+      : `<div class="bookings-item-poster-placeholder">🎬</div>`;
+
+    let statusHTML = '';
+    if (s.my_booking) {
+      const seats = s.my_booking.seats || 1;
+      statusHTML = `<span class="status-pill pill-booked" style="font-size:0.76rem">✓ ${seats} seat${seats!==1?'s':''} booked</span>`;
+    } else if (s.my_waitlist) {
+      statusHTML = `<span class="status-pill pill-waitlist" style="font-size:0.76rem">⏳ Waitlist #${s.my_waitlist.position}</span>`;
+    }
+
+    return `<div class="bookings-item">
+      ${poster}
+      <div style="flex:1;min-width:0">
+        <div class="bookings-item-title">${s.movie_title}</div>
+        <div class="bookings-item-date">${dateStr} · ${s.time}</div>
+        ${statusHTML}
+      </div>
+    </div>`;
+  };
+
+  let html = '';
+  if (upcoming.length) {
+    html += `<div class="section-title" style="margin-bottom:0.6rem">Upcoming</div>`;
+    html += upcoming.map(renderItem).join('');
+  }
+  if (past.length) {
+    html += `<div class="section-title" style="margin-top:1rem;margin-bottom:0.6rem">Past</div>`;
+    html += past.map(renderItem).join('');
+  }
+  html += `<button class="btn btn-ghost" style="margin-top:1rem;font-size:0.88rem" onclick="closeMyBookings();showPage('screenings')">Go to Screenings →</button>`;
+
+  el.innerHTML = html;
 }
 
 function showDetailFromNew(movieId) {
@@ -1049,7 +1167,7 @@ function renderHomeMovies() {
           </div>
         </div>
         <div class="movie-row-scores">
-          ${m.avg_score ? `<div class="community-avg">${m.avg_score}<span style="font-size:0.65rem;color:var(--text-dim)">/10</span></div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.avg_score ? `<div class="community-avg">${m.avg_score}</div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
           ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
         </div>
       </div>
@@ -1226,7 +1344,7 @@ function screeningCardHTML(s, i) {
   const poster = movie.poster_url
     ? `<img class="screening-poster" src="${movie.poster_url}" onerror="this.outerHTML='<div class=screening-poster-placeholder>🎬</div>'">`
     : `<div class="screening-poster-placeholder">🎬</div>`;
-  const communityScr = movie.avg_score ? `<span class="badge" style="background:rgba(27,122,122,0.15);color:var(--teal-light);border:1px solid rgba(27,122,122,0.3)">Community ${movie.avg_score}/10</span>` : '';
+  const communityScr = movie.avg_score ? `<span class="badge" style="background:rgba(27,122,122,0.15);color:var(--teal-light);border:1px solid rgba(27,122,122,0.3)">Community ${movie.avg_score}</span>` : '';
 
   let actionHTML = '';
   if (s.my_booking) {
