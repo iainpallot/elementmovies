@@ -747,7 +747,7 @@ function showPage(page) {
   if (navEl) navEl.classList.add('active');
   const titles = { home: 'Home', screenings: 'Screenings', library: 'Library', detail: '', admin: 'Admin' };
   document.getElementById('header-page').textContent = titles[page] ?? '';
-  window.scrollTo(0, 0);
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
   if (page === 'home') {
     if (allMovies.length) renderHomeDashboard();
     // else renderHomeDashboard() is called after Promise.all in startApp()
@@ -966,7 +966,7 @@ function renderHomeBottomSection(newIds) {
           <div class="movie-row-actor">${m.lead_actor||''}</div>
         </div>
         <div class="movie-row-scores">
-          ${m.avg_score ? `<div class="community-avg">${m.avg_score}</div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.avg_score ? `<div class="community-avg-label">community</div><div class="community-avg">${m.avg_score}</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
           ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
         </div>
       </div>
@@ -1196,7 +1196,7 @@ function renderHomeMovies() {
           </div>
         </div>
         <div class="movie-row-scores">
-          ${m.avg_score ? `<div class="community-avg">${m.avg_score}</div><div class="community-avg-label">community</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.avg_score ? `<div class="community-avg-label">community</div><div class="community-avg">${m.avg_score}</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
           ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
         </div>
       </div>
@@ -1249,6 +1249,7 @@ function showDetail(movie_id) {
         <div class="detail-badges" style="margin-bottom:0.5rem">
           ${m.imdb_rating?`<a href="${m.imdb_url||'#'}" target="_blank" class="badge badge-imdb" style="text-decoration:none">IMDb ${m.imdb_rating}</a>`:''}
           ${m.rt_score?`<a href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.title)}" target="_blank" class="badge badge-rt" style="text-decoration:none">RT ${formatRT(m.rt_score)}</a>`:''}
+          ${m._contentRating?`<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${m._contentRating}</span>`:`<span id="detail-rating-badge-${m.movie_id}"></span>`}
         </div>
         ${costPill(isFreeToScreen(m, ourServicesCache||[]))}
       </div>
@@ -1262,7 +1263,7 @@ function showDetail(movie_id) {
       <div class="section-title">Community Score</div>
       <div class="score-row">
         <div class="score-big" id="detail-score-${m.movie_id}">${score>0?m.avg_score:'—'}</div>
-        <div><div class="score-meta-label">out of 10</div><div class="score-meta-votes" id="detail-votes-${m.movie_id}">${m.vote_count} vote${m.vote_count!==1?'s':''}</div></div>
+        <div><div class="score-meta-votes" id="detail-votes-${m.movie_id}">${m.vote_count} vote${m.vote_count!==1?'s':''}</div></div>
       </div>
       ${score>0?`<div class="score-bar"><div class="score-bar-fill" id="detail-bar-${m.movie_id}" style="width:${pct}%"></div></div>`:''}
     </div>
@@ -1277,6 +1278,7 @@ function showDetail(movie_id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-detail').classList.add('active');
+  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
 
   // Async: fetch synopsis from OMDb
   loadDetailSynopsis(m.movie_id, m.title);
@@ -1304,6 +1306,23 @@ async function loadSynopsis(elId, title) {
         }
       }
       const overview = first?.overview;
+      // Fetch AU content rating in parallel from TMDB release_dates
+      if (movie && first?.id && !movie._contentRating) {
+        fetch(`https://api.themoviedb.org/3/movie/${first.id}/release_dates?api_key=0e0ec3c6d62df378f31f7ddb78a83b49`)
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (!data) return;
+            const auEntry = data.results?.find(r => r.iso_3166_1 === 'AU');
+            const usEntry = data.results?.find(r => r.iso_3166_1 === 'US');
+            const cert = auEntry?.release_dates?.find(d => d.certification)?.certification
+                      || usEntry?.release_dates?.find(d => d.certification)?.certification;
+            if (cert) {
+              movie._contentRating = cert;
+              const badgeEl = document.getElementById(`detail-rating-badge-${movie.movie_id}`);
+              if (badgeEl) badgeEl.outerHTML = `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${cert}</span>`;
+            }
+          }).catch(() => {});
+      }
       if (overview) {
         setSynopsisText(el, overview);
         return;
@@ -1316,6 +1335,12 @@ async function loadSynopsis(elId, title) {
     const omdbData = await omdbRes.json();
     if (omdbData?.Plot && omdbData.Plot !== 'N/A') {
       setSynopsisText(el, omdbData.Plot);
+    }
+    // OMDb rating fallback if TMDB didn't return one
+    if (movie && !movie._contentRating && omdbData?.Rated && omdbData.Rated !== 'N/A' && omdbData.Rated !== 'Not Rated') {
+      movie._contentRating = omdbData.Rated;
+      const badgeEl = document.getElementById(`detail-rating-badge-${movie.movie_id}`);
+      if (badgeEl) badgeEl.outerHTML = `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${omdbData.Rated}</span>`;
     }
   } catch (e) {}
 }
