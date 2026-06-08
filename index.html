@@ -767,7 +767,7 @@ function showPage(page) {
       loadScreenings();
     }
   }
-  if (page === 'library') { if (!allMovies.length) loadLibrary(); else renderHomeMovies(); }
+  if (page === 'library') { if (!allMovies.length) loadLibrary(); else { renderHomeMovies(); loadAllGenres(); } }
   if (page === 'admin') loadAdmin();
 }
 
