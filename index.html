@@ -257,10 +257,11 @@
   .divider-label { font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0.75rem 0 0.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
 
   /* ── Genre chips ── */
-  .genre-filter-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; padding-bottom: 0.3rem; }
-  .genre-chip { padding: 0.28rem 0.75rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.76rem; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; flex-shrink: 0; }
+  .genre-filter-bar { margin-bottom: 0.75rem; padding-bottom: 0.3rem; }
+  .genre-chip { display: inline-block; margin: 0.15rem 0.3rem 0.15rem 0; padding: 0.28rem 0.75rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.76rem; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; }
   .genre-chip:hover { border-color: rgba(27,122,122,0.4); color: var(--text); }
   .genre-chip.active { background: var(--teal-dim); color: var(--teal-light); border-color: rgba(27,122,122,0.4); font-weight: 500; }
+  .rating-pill { display: inline-block; font-size: 0.62rem; padding: 0.05rem 0.38rem; border-radius: 4px; border: 1px solid var(--border); color: var(--text-dim); white-space: nowrap; vertical-align: middle; margin-left: 0.3rem; }
   .genre-tag { font-size: 0.68rem; color: var(--teal); background: var(--teal-dim); padding: 0.1rem 0.38rem; border-radius: 3px; white-space: nowrap; display: inline-block; }
 
   /* ── My Bookings slide-out ── */
@@ -372,7 +373,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.1</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.2</span>
     </div>
   </div>
 
@@ -1080,8 +1081,8 @@ function renderGenreFilterBar() {
   allMovies.forEach(m => (m._genres || []).forEach(g => genreSet.add(g)));
   const genres = [...genreSet].sort();
   if (!genres.length) { el.style.display = 'none'; return; }
-  el.style.display = 'flex';
-  el.innerHTML = `<button class="genre-chip ${!activeGenreFilter?'active':''}" onclick="setGenreFilter(null)">All</button>${genres.map(g => `<button class="genre-chip ${activeGenreFilter===g?'active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')">  ${g}</button>`).join('')}`;
+  el.style.display = 'block';
+  el.innerHTML = `<button class="genre-chip ${!activeGenreFilter?'active':''}" onclick="setGenreFilter(null)">All</button>${genres.map(g => `<button class="genre-chip ${activeGenreFilter===g?'active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')"> ${g}</button>`).join('')}`;
 }
 
 function setGenreFilter(genre) {
@@ -1275,11 +1276,8 @@ function renderHomeMovies() {
       <div onclick="showDetail('${m.movie_id}')" style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:0">
         ${poster}
         <div class="movie-row-info">
-          <div style="display:flex;align-items:baseline;gap:0.3rem;min-width:0">
-            <div class="movie-row-title" style="flex:1;min-width:0">${m.title}</div>
-            ${m._contentRating?`<span style="font-size:0.68rem;color:var(--text-dim);white-space:nowrap;flex-shrink:0">(${m._contentRating})</span>`:''}
-          </div>
-          <div class="movie-row-actor">${m.lead_actor||''}</div>
+          <div class="movie-row-title">${m.title}</div>
+          <div class="movie-row-actor">${m.lead_actor||''}${m._contentRating?`<span class="rating-pill">${m._contentRating}</span>`:''}</div>
           <div style="display:flex;gap:0.3rem;margin-top:0.2rem;flex-wrap:wrap;align-items:center">
             ${isScreened ? '<div class="movie-row-tag">Screened</div>' : ''}
             ${pill}
@@ -1337,11 +1335,10 @@ function showDetail(movie_id) {
       ${poster}
       <div class="detail-info">
         <div class="detail-title">${m.title}</div>
-        <div class="detail-actor">${m.lead_actor||''}</div>
+        <div class="detail-actor">${m.lead_actor||''}${m._contentRating?`<span class="rating-pill">${m._contentRating}</span>`:`<span id="detail-rating-badge-${m.movie_id}"></span>`}</div>
         <div class="detail-badges">
           ${m.imdb_rating?`<a href="${m.imdb_url||'#'}" target="_blank" class="badge badge-imdb" style="text-decoration:none">IMDb ${m.imdb_rating}</a>`:''}
           ${m.rt_score?`<a href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.title)}" target="_blank" class="badge badge-rt" style="text-decoration:none">RT ${formatRT(m.rt_score)}</a>`:''}
-          ${m._contentRating?`<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${m._contentRating}</span>`:`<span id="detail-rating-badge-${m.movie_id}"></span>`}
         </div>
         ${costPill(isFreeToScreen(m, ourServicesCache||[]))}
         <div id="detail-genres-${m.movie_id}" style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.4rem;${genreTags?'':'display:none'}">${genreTags}</div>
@@ -1414,7 +1411,7 @@ async function loadSynopsis(elId, title) {
               movie._contentRating = cert;
               try { const rc=JSON.parse(localStorage.getItem('em_rating_cache')||'{}'); rc[movie.movie_id]=cert; localStorage.setItem('em_rating_cache',JSON.stringify(rc)); } catch(e){}
               const badgeEl = document.getElementById(`detail-rating-badge-${movie.movie_id}`);
-              if (badgeEl) badgeEl.outerHTML = `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${cert}</span>`;
+              if (badgeEl) badgeEl.outerHTML = `<span class="rating-pill">${cert}</span>`;
             }
           }).catch(() => {});
       }
