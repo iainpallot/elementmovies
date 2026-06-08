@@ -962,7 +962,7 @@ function renderHomeBottomSection(newIds) {
       ? `<img class="movie-row-poster" src="${m.poster_url}" onerror="this.outerHTML='<div class=movie-row-poster-placeholder>🎬</div>'">`
       : `<div class="movie-row-poster-placeholder">🎬</div>`;
     return `
-    <div class="movie-row" id="new-row-${m.movie_id}" style="margin-bottom:0.4rem">
+    <div id="new-row-${m.movie_id}" style="display:flex;align-items:center;gap:0.5rem;padding:0.5rem 0;border-top:1px solid var(--border)">
       <div onclick="showDetailFromNew('${m.movie_id}')" style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:0;cursor:pointer">
         ${poster}
         <div class="movie-row-info">
@@ -981,15 +981,14 @@ function renderHomeBottomSection(newIds) {
   }).join('');
 
   el.innerHTML = `
-    <div style="margin-bottom:1rem">
-      <div class="home-block-header" style="margin-bottom:0.5rem">
-        <div class="home-block-title">✨ ${count} New Movie${count!==1?'s':''} to Rate</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem;margin-top:0.65rem;margin-bottom:1rem">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.1rem">
+        <span style="font-size:0.82rem;font-weight:600;color:var(--text)">✨ ${count} New Movie${count!==1?'s':''} to Rate</span>
         <button id="ack-all-btn" onclick="acknowledgeAllNewMovies()"
-          style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:0.2rem 0.6rem;font-size:0.72rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s">
-          Mark all as seen
+          style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s">
+          Mark all seen
         </button>
       </div>
-      <div style="font-size:0.75rem;color:var(--text-dim);margin-bottom:0.75rem">Tap to vote · "Seen it" removes from this list next visit</div>
       ${rows}
     </div>`;
 }
