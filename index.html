@@ -256,7 +256,8 @@
   .divider-label { font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0.75rem 0 0.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
 
   /* ── Genre chips ── */
-  .genre-filter-bar { display: flex; gap: 0.4rem; overflow-x: auto; margin-bottom: 0.75rem; padding-bottom: 0.3rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .genre-filter-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; padding-bottom: 0.3rem; }
+  @media (max-width: 600px) { .genre-filter-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; } }
   .genre-filter-bar::-webkit-scrollbar { display: none; }
   .genre-chip { padding: 0.28rem 0.75rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.76rem; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; flex-shrink: 0; }
   .genre-chip:hover { border-color: rgba(27,122,122,0.4); color: var(--text); }
@@ -792,8 +793,17 @@ async function loadLibrary() {
   hideLoader();
   if (movRes.ok) allMovies = movRes.movies;
   if (scrRes.ok) allScreenings = scrRes.screenings;
+  // Pre-populate genres & ratings from cache so first render already has them
+  try {
+    const cg = JSON.parse(localStorage.getItem('em_genre_cache') || '{}');
+    const cr = JSON.parse(localStorage.getItem('em_rating_cache') || '{}');
+    allMovies.forEach(m => {
+      if (cg[m.movie_id]) m._genres = cg[m.movie_id];
+      if (cr[m.movie_id]) m._contentRating = cr[m.movie_id];
+    });
+  } catch(e) {}
   renderHomeMovies();
-  loadAllGenres(); // background — populates genre chips once done
+  loadAllGenres(); // background — fills any gaps and saves updated cache
 }
 
 // Mark screened movies
@@ -1235,7 +1245,10 @@ function renderHomeMovies() {
       <div onclick="showDetail('${m.movie_id}')" style="display:flex;align-items:center;gap:0.5rem;flex:1;min-width:0">
         ${poster}
         <div class="movie-row-info">
-          <div class="movie-row-title">${m.title}</div>
+          <div style="display:flex;align-items:baseline;gap:0.3rem;min-width:0">
+            <div class="movie-row-title" style="flex:1;min-width:0">${m.title}</div>
+            ${m._contentRating?`<span style="font-size:0.68rem;color:var(--text-dim);white-space:nowrap;flex-shrink:0">(${m._contentRating})</span>`:''}
+          </div>
           <div class="movie-row-actor">${m.lead_actor||''}</div>
           <div style="display:flex;gap:0.3rem;margin-top:0.2rem;flex-wrap:wrap;align-items:center">
             ${isScreened ? '<div class="movie-row-tag">Screened</div>' : ''}
