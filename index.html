@@ -526,7 +526,7 @@
 
 <script>
 const API = "https://script.google.com/macros/s/AKfycbwN5ABiNIn1snW3euBEBQWijW-DyQpV0KdEJsS6l9W5HOSD4fHEtdMBoM5yx7figEX7Bw/exec";
-let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'home';
+let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'home', openAttendeesId = null;
 let pendingBooking = null;
 
 // ── LOADER ──
@@ -1267,14 +1267,34 @@ function screeningCardHTML(s, i) {
     <div id="seat-picker-${s.screening_id}" style="display:none"></div>
     ${s.attendees && s.attendees.length ? `
     <div style="margin-top:0.75rem;padding-top:0.75rem;border-top:1px solid var(--border)">
-      <div style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:0.5rem">
-        Attending (${s.seats_taken} seat${s.seats_taken!==1?'s':''})
+      <div onclick="toggleAttendees('${s.screening_id}')" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none">
+        <div style="font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-dim)">
+          Attending (${s.seats_taken} seat${s.seats_taken!==1?'s':''})
+        </div>
+        <span id="att-arrow-${s.screening_id}" style="color:var(--text-dim);font-size:1rem;transition:transform 0.2s;display:inline-block">›</span>
       </div>
-      <div style="display:flex;flex-wrap:wrap;gap:0.4rem">
+      <div id="att-body-${s.screening_id}" style="display:none;flex-wrap:wrap;gap:0.4rem;margin-top:0.5rem">
         ${s.attendees.map(a => `<span style="background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:0.2rem 0.6rem;font-size:0.75rem;color:var(--text)">${a.name}${a.seats>1?' ×'+a.seats:''}</span>`).join('')}
       </div>
     </div>` : ''}
   </div>`;
+}
+
+function toggleAttendees(screening_id) {
+  const body = document.getElementById(`att-body-${screening_id}`);
+  const arrow = document.getElementById(`att-arrow-${screening_id}`);
+  if (!body) return;
+  const isOpen = body.style.display !== 'none';
+  // Collapse the previously open card
+  if (openAttendeesId && openAttendeesId !== screening_id) {
+    const pb = document.getElementById(`att-body-${openAttendeesId}`);
+    const pa = document.getElementById(`att-arrow-${openAttendeesId}`);
+    if (pb) pb.style.display = 'none';
+    if (pa) pa.style.transform = '';
+  }
+  body.style.display = isOpen ? 'none' : 'flex';
+  if (arrow) arrow.style.transform = isOpen ? '' : 'rotate(90deg)';
+  openAttendeesId = isOpen ? null : screening_id;
 }
 
 // ── SEAT PICKER ──
@@ -1815,13 +1835,14 @@ async function rejectMember(id) { if(!confirm('Reject?')) return; const r = awai
 
 
 async function loadHeadcounts() {
+  const list = document.getElementById('headcount-list');
+  if (!list) return;
   const res = await api('getScreenings');
   if (!res.ok) return;
-  const list = document.getElementById('headcount-list');
 
-  // All screenings including past, sorted newest first
-  const allRes = await api('getScreenings');
-  const screenings = (allRes.screenings || []).sort((a,b) => b.date.localeCompare(a.date));
+  // Keep global in sync so home/screenings pages see fresh data
+  allScreenings = res.screenings || [];
+  const screenings = [...allScreenings].sort((a,b) => b.date.localeCompare(a.date));
 
   if (!screenings.length) { list.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">No screenings yet.</div>'; return; }
 
@@ -2076,7 +2097,7 @@ async function submitScreening() {
   if (res.ok) {
     showMsg(msg, screening_id ? '✓ Screening updated' : '✓ Screening scheduled!', 'success');
     cancelEditScreening();
-    loadHeadcounts();
+    await loadHeadcounts();
     loadLibrary();
   } else {
     showMsg(msg, res.error, 'error');
