@@ -129,7 +129,11 @@
   .badge { padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.78rem; font-weight: 500; }
   .badge-imdb { background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid rgba(201,168,76,0.3); }
   .badge-rt { background: rgba(192,57,43,0.15); color: #e74c3c; border: 1px solid rgba(192,57,43,0.2); }
-  .detail-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+  .detail-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
+  .synopsis-wrap { position: relative; margin-bottom: 0.75rem; }
+  .synopsis-wrap.clamped .synopsis-text { max-height: calc(0.87rem * 1.6 * 2); overflow: hidden; }
+  .synopsis-wrap.clamped::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1.5rem; background: linear-gradient(to bottom, transparent, var(--bg)); pointer-events: none; }
+  .synopsis-more-btn { background: none; border: none; color: var(--teal-light); font-size: 0.8rem; cursor: pointer; padding: 0.1rem 0 0; font-family: 'DM Sans', sans-serif; display: block; }
   .detail-imdb-link { font-size: 0.75rem; color: var(--gold); text-decoration: none; }
   .detail-streaming { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; line-height: 1.5; }
   .community-score-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
@@ -747,7 +751,7 @@ function showPage(page) {
   if (navEl) navEl.classList.add('active');
   const titles = { home: 'Home', screenings: 'Screenings', library: 'Library', detail: '', admin: 'Admin' };
   document.getElementById('header-page').textContent = titles[page] ?? '';
-  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
+  setTimeout(() => { window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; }, 20);
   if (page === 'home') {
     if (allMovies.length) renderHomeDashboard();
     // else renderHomeDashboard() is called after Promise.all in startApp()
@@ -992,8 +996,19 @@ function renderHomeBottomSection(newIds) {
 
 // ── GENRES ──
 async function loadAllGenres() {
+  // Restore cached genres/ratings from localStorage first (survives logout/login)
+  try {
+    const cachedGenres = JSON.parse(localStorage.getItem('em_genre_cache') || '{}');
+    const cachedRatings = JSON.parse(localStorage.getItem('em_rating_cache') || '{}');
+    allMovies.forEach(m => {
+      if (!m._genres && cachedGenres[m.movie_id]) m._genres = cachedGenres[m.movie_id];
+      if (!m._contentRating && cachedRatings[m.movie_id]) m._contentRating = cachedRatings[m.movie_id];
+    });
+  } catch(e) {}
+
   const missing = allMovies.filter(m => !m._genres);
-  if (!missing.length) { renderGenreFilterBar(); return; }
+  if (!missing.length) { renderGenreFilterBar(); renderHomeMovies(); return; }
+
   // Batch in groups of 10 — parallel within each batch
   for (let i = 0; i < missing.length; i += 10) {
     await Promise.all(missing.slice(i, i + 10).map(async m => {
@@ -1007,6 +1022,14 @@ async function loadAllGenres() {
       } catch(e) { m._genres = []; }
     }));
   }
+
+  // Persist to localStorage so genres survive logout/login
+  try {
+    const genreMap = {};
+    allMovies.forEach(m => { if (m._genres?.length) genreMap[m.movie_id] = m._genres; });
+    localStorage.setItem('em_genre_cache', JSON.stringify(genreMap));
+  } catch(e) {}
+
   renderGenreFilterBar();
   renderHomeMovies();
 }
@@ -1032,16 +1055,32 @@ function setGenreFilter(genre) {
 function renderMyBookingsBtn() {
   const el = document.getElementById('home-mybookings-btn');
   if (!el) return;
-  const booked = allScreenings.filter(s => s.my_booking || s.my_waitlist);
-  const count = booked.filter(s => s.my_booking).length;
-  const waitCount = booked.filter(s => s.my_waitlist).length;
-  const total = count + waitCount;
-  if (!total) { el.innerHTML = ''; return; }
-  const label = [count && `${count} booking${count!==1?'s':''}`, waitCount && `${waitCount} waitlist`].filter(Boolean).join(' · ');
-  el.innerHTML = `<button class="my-bookings-btn" onclick="openMyBookings()">
-    <span>🎟️ My Bookings</span>
-    <span class="bookings-count-badge">${label}</span>
-  </button>`;
+  const today = new Date().toISOString().split('T')[0];
+  const upcoming = allScreenings.filter(s => s.date >= today && (s.my_booking || s.my_waitlist))
+    .sort((a,b) => a.date.localeCompare(b.date));
+  if (!upcoming.length) { el.innerHTML = ''; return; }
+
+  const rows = upcoming.map(s => {
+    const dateStr = new Date(s.date + 'T00:00:00').toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' });
+    const pill = s.my_booking
+      ? `<span class="status-pill pill-booked" style="font-size:0.7rem;padding:0.1rem 0.45rem">✓ Booked</span>`
+      : `<span class="status-pill pill-waitlist" style="font-size:0.7rem;padding:0.1rem 0.45rem">⏳ Waitlist</span>`;
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:0.4rem 0;border-top:1px solid var(--border)">
+      <div style="min-width:0;flex:1">
+        <div style="font-size:0.88rem;font-family:'Playfair Display',serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${s.movie_title}</div>
+        <div style="font-size:0.75rem;color:var(--text-dim)">${dateStr} · ${s.time}</div>
+      </div>
+      ${pill}
+    </div>`;
+  }).join('');
+
+  el.innerHTML = `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem;cursor:pointer;margin-top:0.65rem" onclick="openMyBookings()">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.4rem">
+      <span style="font-size:0.82rem;font-weight:600;color:var(--text)">🎟️ My Bookings</span>
+      <span style="color:var(--teal-light);font-size:1rem">›</span>
+    </div>
+    ${rows}
+  </div>`;
 }
 
 function openMyBookings() {
@@ -1080,11 +1119,20 @@ function renderMyBookingsPanel() {
       : `<div class="bookings-item-poster-placeholder">🎬</div>`;
 
     let statusHTML = '';
+    let actionsHTML = '';
+    const isPast = s.date < today;
     if (s.my_booking) {
       const seats = s.my_booking.seats || 1;
       statusHTML = `<span class="status-pill pill-booked" style="font-size:0.76rem">✓ ${seats} seat${seats!==1?'s':''} booked</span>`;
+      if (!isPast) actionsHTML = `<div style="display:flex;gap:0.4rem;margin-top:0.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="closeMyBookings();showSeatPicker('${s.screening_id}',${s.seats_left},${seats})">Change seats</button>
+        <button class="btn btn-danger btn-sm" onclick="closeMyBookings();cancelBooking('${s.screening_id}')">Cancel</button>
+      </div>`;
     } else if (s.my_waitlist) {
       statusHTML = `<span class="status-pill pill-waitlist" style="font-size:0.76rem">⏳ Waitlist #${s.my_waitlist.position}</span>`;
+      if (!isPast) actionsHTML = `<div style="margin-top:0.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="closeMyBookings();cancelBooking('${s.screening_id}')">Leave waitlist</button>
+      </div>`;
     }
 
     return `<div class="bookings-item">
@@ -1093,6 +1141,7 @@ function renderMyBookingsPanel() {
         <div class="bookings-item-title">${s.movie_title}</div>
         <div class="bookings-item-date">${dateStr} · ${s.time}</div>
         ${statusHTML}
+        ${actionsHTML}
       </div>
     </div>`;
   };
@@ -1240,36 +1289,39 @@ function showDetail(movie_id) {
     `<button class="vote-btn ${myScore===n?'selected':''}" onclick="castVote('${m.movie_id}',${n},this)">${n}</button>`
   ).join('');
 
+  const genreTags = (m._genres||[]).map(g=>`<span class="genre-tag" style="font-size:0.75rem;padding:0.15rem 0.45rem">${g}</span>`).join('');
   document.getElementById('detail-content').innerHTML = `
-    <div class="detail-hero">
+    <div class="detail-hero" style="margin-bottom:0.75rem">
       ${poster}
       <div class="detail-info">
         <div class="detail-title">${m.title}</div>
         <div class="detail-actor">${m.lead_actor||''}</div>
-        <div class="detail-badges" style="margin-bottom:0.5rem">
+        <div class="detail-badges">
           ${m.imdb_rating?`<a href="${m.imdb_url||'#'}" target="_blank" class="badge badge-imdb" style="text-decoration:none">IMDb ${m.imdb_rating}</a>`:''}
           ${m.rt_score?`<a href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.title)}" target="_blank" class="badge badge-rt" style="text-decoration:none">RT ${formatRT(m.rt_score)}</a>`:''}
           ${m._contentRating?`<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${m._contentRating}</span>`:`<span id="detail-rating-badge-${m.movie_id}"></span>`}
         </div>
         ${costPill(isFreeToScreen(m, ourServicesCache||[]))}
+        <div id="detail-genres-${m.movie_id}" style="display:flex;flex-wrap:wrap;gap:0.3rem;margin-top:0.4rem;${genreTags?'':'display:none'}">${genreTags}</div>
       </div>
     </div>
-    <div id="detail-genres-${m.movie_id}" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.65rem;${(m._genres||[]).length?'':'display:none'}">${(m._genres||[]).map(g=>`<span class="genre-tag" style="font-size:0.78rem;padding:0.18rem 0.5rem">${g}</span>`).join('')}</div>
-    <div id="detail-synopsis-${m.movie_id}" style="margin-bottom:1rem;display:none">
-      <div id="detail-synopsis-text-${m.movie_id}" style="font-size:0.87rem;color:var(--text-dim);line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;position:relative"></div>
-      <button id="detail-synopsis-more-${m.movie_id}" onclick="expandSynopsis('${m.movie_id}')" style="background:none;border:none;color:var(--teal-light);font-size:0.82rem;cursor:pointer;padding:0.15rem 0;font-family:'DM Sans',sans-serif;display:none">More ▾</button>
+    <div class="synopsis-wrap${m._genres||m._contentRating?'':''}" id="detail-synopsis-${m.movie_id}" style="display:none">
+      <div class="synopsis-text" id="detail-synopsis-text-${m.movie_id}" style="font-size:0.87rem;color:var(--text-dim);line-height:1.6"></div>
+      <button class="synopsis-more-btn" id="detail-synopsis-more-${m.movie_id}" onclick="expandSynopsis('${m.movie_id}')" style="display:none">More ▾</button>
     </div>
-    <div class="community-score-block">
-      <div class="section-title">Community Score</div>
-      <div class="score-row">
+    <div class="community-score-block" style="padding:0.75rem;margin-bottom:0.75rem">
+      <div class="score-row" style="margin-bottom:${score>0?'0.4rem':'0'}">
         <div class="score-big" id="detail-score-${m.movie_id}">${score>0?m.avg_score:'—'}</div>
-        <div><div class="score-meta-votes" id="detail-votes-${m.movie_id}">${m.vote_count} vote${m.vote_count!==1?'s':''}</div></div>
+        <div style="font-size:0.78rem;color:var(--text-dim)">
+          <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.05em;color:var(--text-dim);margin-bottom:0.15rem">Community Score</div>
+          <div id="detail-votes-${m.movie_id}">${m.vote_count} vote${m.vote_count!==1?'s':''}</div>
+        </div>
       </div>
       ${score>0?`<div class="score-bar"><div class="score-bar-fill" id="detail-bar-${m.movie_id}" style="width:${pct}%"></div></div>`:''}
     </div>
-    <div class="vote-block">
-      <div class="section-title">Your Rating</div>
-      <div class="vote-label">${myScore?`You rated this ${myScore}/10 — tap to change`:'Tap a score to rate this movie'}</div>
+    <div class="vote-block" style="padding:0.75rem;margin-bottom:0.5rem">
+      <div class="section-title" style="margin-bottom:0.3rem">Your Rating</div>
+      <div class="vote-label" style="margin-bottom:0.5rem">${myScore?`You rated this ${myScore}/10 — tap to change`:'Tap a score to rate this movie'}</div>
       <div class="number-vote" id="vote-btns-${m.movie_id}">${voteBtns}</div>
       <div class="vote-msg" id="vote-msg-${m.movie_id}"></div>
     </div>`;
@@ -1278,7 +1330,7 @@ function showDetail(movie_id) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('page-detail').classList.add('active');
-  requestAnimationFrame(() => requestAnimationFrame(() => window.scrollTo(0, 0)));
+  setTimeout(() => { window.scrollTo(0,0); document.documentElement.scrollTop=0; document.body.scrollTop=0; }, 20);
 
   // Async: fetch synopsis from OMDb
   loadDetailSynopsis(m.movie_id, m.title);
@@ -1318,6 +1370,7 @@ async function loadSynopsis(elId, title) {
                       || usEntry?.release_dates?.find(d => d.certification)?.certification;
             if (cert) {
               movie._contentRating = cert;
+              try { const rc=JSON.parse(localStorage.getItem('em_rating_cache')||'{}'); rc[movie.movie_id]=cert; localStorage.setItem('em_rating_cache',JSON.stringify(rc)); } catch(e){}
               const badgeEl = document.getElementById(`detail-rating-badge-${movie.movie_id}`);
               if (badgeEl) badgeEl.outerHTML = `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${cert}</span>`;
             }
@@ -1339,6 +1392,7 @@ async function loadSynopsis(elId, title) {
     // OMDb rating fallback if TMDB didn't return one
     if (movie && !movie._contentRating && omdbData?.Rated && omdbData.Rated !== 'N/A' && omdbData.Rated !== 'Not Rated') {
       movie._contentRating = omdbData.Rated;
+      try { const rc=JSON.parse(localStorage.getItem('em_rating_cache')||'{}'); rc[movie.movie_id]=omdbData.Rated; localStorage.setItem('em_rating_cache',JSON.stringify(rc)); } catch(e){}
       const badgeEl = document.getElementById(`detail-rating-badge-${movie.movie_id}`);
       if (badgeEl) badgeEl.outerHTML = `<span class="badge" style="background:rgba(255,255,255,0.07);color:var(--text-dim);border:1px solid var(--border)">${omdbData.Rated}</span>`;
     }
@@ -1346,15 +1400,17 @@ async function loadSynopsis(elId, title) {
 }
 
 function setSynopsisText(wrapperEl, text) {
-  // wrapperEl is the outer synopsis div; find text + more-btn children if they exist
-  const textEl = wrapperEl.querySelector('[id$="-text-"]') || wrapperEl.querySelector('[id*="synopsis-text"]') || wrapperEl;
+  const textEl = wrapperEl.querySelector('[id*="synopsis-text"]') || wrapperEl;
   const moreBtn = wrapperEl.querySelector('[id*="synopsis-more"]');
   if (textEl !== wrapperEl) {
     textEl.textContent = text;
     wrapperEl.style.display = '';
-    // Show "More" button only if text would overflow 2 lines
+    // Check overflow after render — if text is taller than 2 lines, add fade clamp
     requestAnimationFrame(() => {
-      if (textEl.scrollHeight > textEl.clientHeight + 4) {
+      const lineH = parseFloat(getComputedStyle(textEl).fontSize) * 1.6;
+      const twoLines = lineH * 2;
+      if (textEl.scrollHeight > twoLines + 4) {
+        wrapperEl.classList.add('clamped');
         if (moreBtn) moreBtn.style.display = '';
       }
     });
@@ -1366,12 +1422,10 @@ function setSynopsisText(wrapperEl, text) {
 }
 
 function expandSynopsis(movieId) {
-  const textEl = document.getElementById(`detail-synopsis-text-${movieId}`);
+  const wrap = document.getElementById(`detail-synopsis-${movieId}`);
   const moreBtn = document.getElementById(`detail-synopsis-more-${movieId}`);
-  if (!textEl) return;
-  textEl.style.webkitLineClamp = 'unset';
-  textEl.style.display = 'block';
-  textEl.style.overflow = 'visible';
+  if (!wrap) return;
+  wrap.classList.remove('clamped');
   if (moreBtn) moreBtn.style.display = 'none';
 }
 
