@@ -251,6 +251,14 @@
 
   .divider-label { font-size: 0.76rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-dim); padding: 0.75rem 0 0.5rem; border-top: 1px solid var(--border); margin-top: 0.5rem; }
 
+  /* ── Genre chips ── */
+  .genre-filter-bar { display: flex; gap: 0.4rem; overflow-x: auto; margin-bottom: 0.75rem; padding-bottom: 0.3rem; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+  .genre-filter-bar::-webkit-scrollbar { display: none; }
+  .genre-chip { padding: 0.28rem 0.75rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.76rem; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; flex-shrink: 0; }
+  .genre-chip:hover { border-color: rgba(27,122,122,0.4); color: var(--text); }
+  .genre-chip.active { background: var(--teal-dim); color: var(--teal-light); border-color: rgba(27,122,122,0.4); font-weight: 500; }
+  .genre-tag { font-size: 0.68rem; color: var(--teal); background: var(--teal-dim); padding: 0.1rem 0.38rem; border-radius: 3px; white-space: nowrap; display: inline-block; }
+
   /* ── My Bookings slide-out ── */
   .bookings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(3px); }
   .bookings-backdrop.open { opacity: 1; pointer-events: all; }
@@ -409,6 +417,7 @@
         <button class="sort-btn" onclick="sortHome('title')" id="hsort-title">A–Z</button>
       </div>
 
+      <div id="genre-filter-bar" style="display:none"></div>
       <div id="home-movies-list"><div class="inline-loading"><div class="spinner"></div> Loading movies…</div></div>
     </div>
 
@@ -562,6 +571,8 @@
 const API = "https://script.google.com/macros/s/AKfycbwN5ABiNIn1snW3euBEBQWijW-DyQpV0KdEJsS6l9W5HOSD4fHEtdMBoM5yx7figEX7Bw/exec";
 let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'home', openAttendeesId = null;
 let pendingBooking = null;
+let activeGenreFilter = null;
+const TMDB_GENRE_MAP = {28:"Action",12:"Adventure",16:"Animation",35:"Comedy",80:"Crime",99:"Documentary",18:"Drama",10751:"Family",14:"Fantasy",36:"History",27:"Horror",10402:"Music",9648:"Mystery",10749:"Romance",878:"Sci-Fi",53:"Thriller",10752:"War",37:"Western"};
 
 // ── LOADER ──
 function showLoader(text) {
@@ -778,6 +789,7 @@ async function loadLibrary() {
   if (movRes.ok) allMovies = movRes.movies;
   if (scrRes.ok) allScreenings = scrRes.screenings;
   renderHomeMovies();
+  loadAllGenres(); // background — populates genre chips once done
 }
 
 // Mark screened movies
@@ -1001,6 +1013,44 @@ function renderHomeBottomSection(newIds) {
     </div>`;
 }
 
+// ── GENRES ──
+async function loadAllGenres() {
+  const missing = allMovies.filter(m => !m._genres);
+  if (!missing.length) { renderGenreFilterBar(); return; }
+  // Batch in groups of 10 — parallel within each batch
+  for (let i = 0; i < missing.length; i += 10) {
+    await Promise.all(missing.slice(i, i + 10).map(async m => {
+      try {
+        const res = await fetch(`https://api.themoviedb.org/3/search/movie?api_key=0e0ec3c6d62df378f31f7ddb78a83b49&query=${encodeURIComponent(m.title)}&language=en-AU`);
+        if (res.ok) {
+          const data = await res.json();
+          const first = data.results?.[0];
+          m._genres = first?.genre_ids?.length ? first.genre_ids.map(id => TMDB_GENRE_MAP[id]).filter(Boolean) : [];
+        } else { m._genres = []; }
+      } catch(e) { m._genres = []; }
+    }));
+  }
+  renderGenreFilterBar();
+  renderHomeMovies();
+}
+
+function renderGenreFilterBar() {
+  const el = document.getElementById('genre-filter-bar');
+  if (!el) return;
+  const genreSet = new Set();
+  allMovies.forEach(m => (m._genres || []).forEach(g => genreSet.add(g)));
+  const genres = [...genreSet].sort();
+  if (!genres.length) { el.style.display = 'none'; return; }
+  el.style.display = 'flex';
+  el.innerHTML = `<button class="genre-chip ${!activeGenreFilter?'active':''}" onclick="setGenreFilter(null)">All</button>${genres.map(g => `<button class="genre-chip ${activeGenreFilter===g?'active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')">  ${g}</button>`).join('')}`;
+}
+
+function setGenreFilter(genre) {
+  activeGenreFilter = genre;
+  renderGenreFilterBar();
+  renderHomeMovies();
+}
+
 // ── MY BOOKINGS SLIDE-OUT ──
 function renderMyBookingsBtn() {
   const el = document.getElementById('home-mybookings-btn');
@@ -1120,6 +1170,7 @@ function renderHomeMovies() {
   const search = (document.getElementById('home-search')?.value || '').toLowerCase();
   const screenedIds = getScreenedMovieIds();
   let movies = allMovies.filter(m => m.title.toLowerCase().includes(search) || (m.lead_actor||'').toLowerCase().includes(search));
+  if (activeGenreFilter) movies = movies.filter(m => (m._genres||[]).includes(activeGenreFilter));
 
   const unscreened = movies.filter(m => !screenedIds.has(m.movie_id));
   const screened = movies.filter(m => screenedIds.has(m.movie_id));
@@ -1161,9 +1212,10 @@ function renderHomeMovies() {
         <div class="movie-row-info">
           <div class="movie-row-title">${m.title}</div>
           <div class="movie-row-actor">${m.lead_actor||''}</div>
-          <div style="display:flex;gap:0.3rem;margin-top:0.2rem;flex-wrap:wrap">
+          <div style="display:flex;gap:0.3rem;margin-top:0.2rem;flex-wrap:wrap;align-items:center">
             ${isScreened ? '<div class="movie-row-tag">Screened</div>' : ''}
             ${pill}
+            ${(m._genres||[]).slice(0,2).map(g=>`<span class="genre-tag">${g}</span>`).join('')}
           </div>
         </div>
         <div class="movie-row-scores">
@@ -1224,6 +1276,7 @@ function showDetail(movie_id) {
         ${costPill(isFreeToScreen(m, ourServicesCache||[]))}
       </div>
     </div>
+    <div id="detail-genres-${m.movie_id}" style="display:flex;flex-wrap:wrap;gap:0.35rem;margin-bottom:0.65rem;${(m._genres||[]).length?'':'display:none'}">${(m._genres||[]).map(g=>`<span class="genre-tag" style="font-size:0.78rem;padding:0.18rem 0.5rem">${g}</span>`).join('')}</div>
     <div id="detail-synopsis-${m.movie_id}" style="margin-bottom:1rem;font-size:0.87rem;color:var(--text-dim);line-height:1.6;display:none"></div>
     <div class="community-score-block">
       <div class="section-title">Community Score</div>
@@ -1252,6 +1305,7 @@ function showDetail(movie_id) {
 async function loadSynopsis(elId, title) {
   const el = document.getElementById(elId);
   if (!el) return;
+  const movie = allMovies.find(m => m.title === title);
   // Try TMDB first — fuzzy title match, much more reliable than OMDb
   try {
     const tmdbRes = await fetch(
@@ -1259,7 +1313,17 @@ async function loadSynopsis(elId, title) {
     );
     if (tmdbRes.ok) {
       const tmdbData = await tmdbRes.json();
-      const overview = tmdbData.results?.[0]?.overview;
+      const first = tmdbData.results?.[0];
+      // Cache genres on the movie object (free — already fetching this data)
+      if (movie && first?.genre_ids?.length && !movie._genres) {
+        movie._genres = first.genre_ids.map(id => TMDB_GENRE_MAP[id]).filter(Boolean);
+        const genreEl = document.getElementById(`detail-genres-${movie.movie_id}`);
+        if (genreEl && movie._genres.length) {
+          genreEl.innerHTML = movie._genres.map(g => `<span class="genre-tag" style="font-size:0.78rem;padding:0.18rem 0.5rem">${g}</span>`).join('');
+          genreEl.style.display = 'flex';
+        }
+      }
+      const overview = first?.overview;
       if (overview) {
         el.textContent = overview;
         el.style.display = '';
