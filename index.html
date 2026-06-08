@@ -132,8 +132,9 @@
   .detail-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.4rem; }
   .synopsis-wrap { position: relative; margin-bottom: 0.75rem; }
   .synopsis-wrap.clamped .synopsis-text { max-height: calc(0.87rem * 1.6 * 2); overflow: hidden; }
-  .synopsis-wrap.clamped::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 1.5rem; background: linear-gradient(to bottom, transparent, var(--bg)); pointer-events: none; }
-  .synopsis-more-btn { background: none; border: none; color: var(--teal-light); font-size: 0.8rem; cursor: pointer; padding: 0.1rem 0 0; font-family: 'DM Sans', sans-serif; display: block; }
+  .synopsis-wrap.clamped::after { content: ''; position: absolute; bottom: 0; right: 0; width: 55%; height: calc(0.87rem * 1.6); background: linear-gradient(to right, transparent, var(--bg) 55%); pointer-events: none; z-index: 0; }
+  .synopsis-more-btn { display: none; position: absolute; bottom: 0; right: 0; background: none; border: none; color: var(--teal-light); font-size: 0.82rem; font-weight: 700; cursor: pointer; padding: 0; font-family: 'DM Sans', sans-serif; line-height: calc(0.87rem * 1.6); z-index: 1; }
+  .synopsis-wrap.clamped .synopsis-more-btn { display: block; }
   .detail-imdb-link { font-size: 0.75rem; color: var(--gold); text-decoration: none; }
   .detail-streaming { font-size: 0.8rem; color: var(--text-dim); margin-top: 0.4rem; line-height: 1.5; }
   .community-score-block { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
@@ -257,8 +258,6 @@
 
   /* ── Genre chips ── */
   .genre-filter-bar { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 0.75rem; padding-bottom: 0.3rem; }
-  @media (max-width: 600px) { .genre-filter-bar { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; } }
-  .genre-filter-bar::-webkit-scrollbar { display: none; }
   .genre-chip { padding: 0.28rem 0.75rem; border-radius: 20px; border: 1px solid var(--border); background: transparent; color: var(--text-dim); font-size: 0.76rem; cursor: pointer; white-space: nowrap; font-family: 'DM Sans', sans-serif; transition: all 0.2s; flex-shrink: 0; }
   .genre-chip:hover { border-color: rgba(27,122,122,0.4); color: var(--text); }
   .genre-chip.active { background: var(--teal-dim); color: var(--teal-light); border-color: rgba(27,122,122,0.4); font-weight: 500; }
@@ -373,7 +372,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-08.2</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.1</span>
     </div>
   </div>
 
@@ -1021,7 +1020,8 @@ async function loadAllGenres() {
   const missing = allMovies.filter(m => !m._genres);
   if (!missing.length) { renderGenreFilterBar(); renderHomeMovies(); return; }
 
-  // Batch in groups of 10 — parallel within each batch
+  // Batch in groups of 10 — parallel within each batch; capture TMDB IDs for rating lookups
+  const tmdbIdMap = {};
   for (let i = 0; i < missing.length; i += 10) {
     await Promise.all(missing.slice(i, i + 10).map(async m => {
       try {
@@ -1030,12 +1030,13 @@ async function loadAllGenres() {
           const data = await res.json();
           const first = data.results?.[0];
           m._genres = first?.genre_ids?.length ? first.genre_ids.map(id => TMDB_GENRE_MAP[id]).filter(Boolean) : [];
+          if (first?.id) tmdbIdMap[m.movie_id] = first.id;
         } else { m._genres = []; }
       } catch(e) { m._genres = []; }
     }));
   }
 
-  // Persist to localStorage so genres survive logout/login
+  // Persist genres to localStorage so they survive logout/login
   try {
     const genreMap = {};
     allMovies.forEach(m => { if (m._genres?.length) genreMap[m.movie_id] = m._genres; });
@@ -1043,6 +1044,32 @@ async function loadAllGenres() {
   } catch(e) {}
 
   renderGenreFilterBar();
+  renderHomeMovies();
+
+  // Background: fetch AU content ratings for movies we just got TMDB IDs for
+  const needsRating = allMovies.filter(m => !m._contentRating && tmdbIdMap[m.movie_id]);
+  if (!needsRating.length) return;
+  for (let i = 0; i < needsRating.length; i += 10) {
+    await Promise.all(needsRating.slice(i, i + 10).map(async m => {
+      try {
+        const res = await fetch(`https://api.themoviedb.org/3/movie/${tmdbIdMap[m.movie_id]}/release_dates?api_key=0e0ec3c6d62df378f31f7ddb78a83b49`);
+        if (res.ok) {
+          const data = await res.json();
+          const auEntry = data.results?.find(r => r.iso_3166_1 === 'AU');
+          const usEntry = data.results?.find(r => r.iso_3166_1 === 'US');
+          const cert = auEntry?.release_dates?.find(d => d.certification)?.certification
+                    || usEntry?.release_dates?.find(d => d.certification)?.certification;
+          if (cert) m._contentRating = cert;
+        }
+      } catch(e) {}
+    }));
+  }
+  // Persist ratings and re-render library rows to show them
+  try {
+    const ratingMap = {};
+    allMovies.forEach(m => { if (m._contentRating) ratingMap[m.movie_id] = m._contentRating; });
+    localStorage.setItem('em_rating_cache', JSON.stringify(ratingMap));
+  } catch(e) {}
   renderHomeMovies();
 }
 
@@ -1322,7 +1349,7 @@ function showDetail(movie_id) {
     </div>
     <div class="synopsis-wrap${m._genres||m._contentRating?'':''}" id="detail-synopsis-${m.movie_id}" style="display:none">
       <div class="synopsis-text" id="detail-synopsis-text-${m.movie_id}" style="font-size:0.87rem;color:var(--text-dim);line-height:1.6"></div>
-      <button class="synopsis-more-btn" id="detail-synopsis-more-${m.movie_id}" onclick="expandSynopsis('${m.movie_id}')" style="display:none">More ▾</button>
+      <button class="synopsis-more-btn" id="detail-synopsis-more-${m.movie_id}" onclick="expandSynopsis('${m.movie_id}')">More ▾</button>
     </div>
     <div class="community-score-block" style="padding:0.75rem;margin-bottom:0.75rem">
       <div class="score-row" style="margin-bottom:${score>0?'0.4rem':'0'}">
@@ -1426,7 +1453,6 @@ function setSynopsisText(wrapperEl, text) {
       const twoLines = lineH * 2;
       if (textEl.scrollHeight > twoLines + 4) {
         wrapperEl.classList.add('clamped');
-        if (moreBtn) moreBtn.style.display = '';
       }
     });
   } else {
