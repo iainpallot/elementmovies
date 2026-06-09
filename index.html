@@ -419,7 +419,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.10</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.11</span>
     </div>
   </div>
 
@@ -1602,24 +1602,26 @@ function _rsRender() {
   ).join('');
 }
 
-function rateSessionScore(n) {
-  document.querySelectorAll('.rs-score-btn').forEach((b,i) => b.classList.toggle('rs-sel', i+1===n));
-  const m = _rs.movies[_rs.idx];
-  api('vote', { movie_id: m.movie_id, score: n }).then(res => {
-    if (res.ok) {
-      const movie = allMovies.find(x => x.movie_id === m.movie_id);
-      if (movie) {
-        const wasVoted = !!movie.my_score;
-        const oldCount = movie.vote_count || 0;
-        const oldTotal = (movie.avg_score ? parseFloat(movie.avg_score) : 0) * oldCount;
-        if (wasVoted) { movie.avg_score = ((oldTotal - movie.my_score + n) / oldCount).toFixed(1); }
-        else { movie.avg_score = ((oldTotal + n) / (oldCount + 1)).toFixed(1); movie.vote_count = oldCount + 1; }
-        movie.my_score = n;
-        m.my_score = n;
-      }
-    }
+async function rateSessionScore(n) {
+  document.querySelectorAll('.rs-score-btn').forEach((b,i) => {
+    b.classList.toggle('rs-sel', i+1===n);
+    b.disabled = true;
   });
-  setTimeout(_rsAdvance, 280);
+  const m = _rs.movies[_rs.idx];
+  const res = await api('vote', { movie_id: m.movie_id, score: n });
+  if (res.ok) {
+    const movie = allMovies.find(x => x.movie_id === m.movie_id);
+    if (movie) {
+      const wasVoted = !!movie.my_score;
+      const oldCount = movie.vote_count || 0;
+      const oldTotal = (movie.avg_score ? parseFloat(movie.avg_score) : 0) * oldCount;
+      if (wasVoted) { movie.avg_score = ((oldTotal - movie.my_score + n) / oldCount).toFixed(1); }
+      else { movie.avg_score = ((oldTotal + n) / (oldCount + 1)).toFixed(1); movie.vote_count = oldCount + 1; }
+      movie.my_score = n;
+      m.my_score = n;
+    }
+  }
+  setTimeout(_rsAdvance, 150);
 }
 
 function rateSessionSkip() { _rsAdvance(); }
