@@ -373,7 +373,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.3</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.4</span>
     </div>
   </div>
 
@@ -579,6 +579,7 @@
 const API = "https://script.google.com/macros/s/AKfycbwN5ABiNIn1snW3euBEBQWijW-DyQpV0KdEJsS6l9W5HOSD4fHEtdMBoM5yx7figEX7Bw/exec";
 let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'home', openAttendeesId = null;
 let pendingBooking = null;
+let pendingSeatPicker = null;
 let activeGenreFilter = null;
 const TMDB_GENRE_MAP = {28:"Action",12:"Adventure",16:"Animation",35:"Comedy",80:"Crime",99:"Documentary",18:"Drama",10751:"Family",14:"Fantasy",36:"History",27:"Horror",10402:"Music",9648:"Mystery",10749:"Romance",878:"Sci-Fi",53:"Thriller",10752:"War",37:"Western"};
 
@@ -1166,7 +1167,7 @@ function renderMyBookingsPanel() {
       const seats = s.my_booking.seats || 1;
       statusHTML = `<span class="status-pill pill-booked" style="font-size:0.76rem">✓ ${seats} seat${seats!==1?'s':''} booked</span>`;
       if (!isPast) actionsHTML = `<div style="display:flex;gap:0.4rem;margin-top:0.5rem">
-        <button class="btn btn-ghost btn-sm" onclick="closeMyBookings();showSeatPicker('${s.screening_id}',${s.seats_left},${seats})">Change seats</button>
+        <button class="btn btn-ghost btn-sm" onclick="pendingSeatPicker={id:'${s.screening_id}',left:${s.seats_left},cur:${seats}};closeMyBookings();showPage('screenings')">Change seats</button>
         <button class="btn btn-danger btn-sm" onclick="closeMyBookings();cancelBooking('${s.screening_id}')">Cancel</button>
       </div>`;
     } else if (s.my_waitlist) {
@@ -1526,6 +1527,15 @@ async function loadScreenings() {
   list.innerHTML = future.map((s,i) => screeningCardHTML(s,i)).join('');
   // Lazy-load synopses for each card
   future.forEach(s => loadSynopsis(`screening-synopsis-${s.screening_id}`, s.movie_title));
+  // If navigated here via "Change seats" from My Bookings, open the picker
+  if (pendingSeatPicker) {
+    const { id, left, cur } = pendingSeatPicker;
+    pendingSeatPicker = null;
+    setTimeout(() => {
+      const el = document.getElementById(`seat-picker-${id}`);
+      if (el) { showSeatPicker(id, left, cur); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }, 80);
+  }
 }
 
 function screeningCardHTML(s, i) {
