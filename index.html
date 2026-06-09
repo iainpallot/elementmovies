@@ -110,7 +110,7 @@
   .movie-row.screened { opacity: 0.5; }
   .movie-row-poster { width: 42px; height: 60px; border-radius: 5px; object-fit: cover; background: var(--surface2); flex-shrink: 0; }
   .movie-row-poster-placeholder { width: 42px; height: 60px; border-radius: 5px; background: var(--surface2); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-  .movie-row-info { flex: 1; min-width: 0; overflow: hidden; }
+  .movie-row-info { flex: 1; min-width: 0; overflow-x: hidden; }
   .movie-row-title { font-family: 'Playfair Display', serif; font-size: 1.05rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .movie-row-actor { font-size: 0.82rem; color: var(--text-dim); margin-top: 0.15rem; }
   .movie-row-tag { font-size: 0.72rem; color: var(--teal); background: var(--teal-dim); padding: 0.1rem 0.4rem; border-radius: 4px; margin-top: 0.2rem; display: inline-block; }
@@ -373,7 +373,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.2</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.3</span>
     </div>
   </div>
 
@@ -1082,7 +1082,8 @@ function renderGenreFilterBar() {
   const genres = [...genreSet].sort();
   if (!genres.length) { el.style.display = 'none'; return; }
   el.style.display = 'block';
-  el.innerHTML = `<button class="genre-chip ${!activeGenreFilter?'active':''}" onclick="setGenreFilter(null)">All</button>${genres.map(g => `<button class="genre-chip ${activeGenreFilter===g?'active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')"> ${g}</button>`).join('')}`;
+  const unscoredActive = activeGenreFilter === '__unscored__';
+  el.innerHTML = `<button class="genre-chip ${!activeGenreFilter?'active':''}" onclick="setGenreFilter(null)">All</button><button class="genre-chip${unscoredActive?' active':''}" onclick="setGenreFilter('__unscored__')" style="${unscoredActive?'':'border-style:dashed'}">Unscored</button>${genres.map(g => `<button class="genre-chip ${activeGenreFilter===g?'active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')"> ${g}</button>`).join('')}`;
 }
 
 function setGenreFilter(genre) {
@@ -1236,7 +1237,8 @@ function renderHomeMovies() {
   const search = (document.getElementById('home-search')?.value || '').toLowerCase();
   const screenedIds = getScreenedMovieIds();
   let movies = allMovies.filter(m => m.title.toLowerCase().includes(search) || (m.lead_actor||'').toLowerCase().includes(search));
-  if (activeGenreFilter) movies = movies.filter(m => (m._genres||[]).includes(activeGenreFilter));
+  if (activeGenreFilter === '__unscored__') movies = movies.filter(m => !m.my_score);
+  else if (activeGenreFilter) movies = movies.filter(m => (m._genres||[]).includes(activeGenreFilter));
 
   const unscreened = movies.filter(m => !screenedIds.has(m.movie_id));
   const screened = movies.filter(m => screenedIds.has(m.movie_id));
@@ -1285,7 +1287,8 @@ function renderHomeMovies() {
           </div>
         </div>
         <div class="movie-row-scores">
-          ${m.avg_score ? `<div class="community-avg-label">community</div><div class="community-avg">${m.avg_score}</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.avg_score ? `<div class="community-avg-label">community <span style="font-size:0.58rem;opacity:0.6">(${m.vote_count||0})</span></div><div class="community-avg">${m.avg_score}</div>` : '<div class="community-avg-label" style="text-align:right">not<br>rated</div>'}
+          ${m.my_score ? `<div style="font-size:0.62rem;color:var(--teal-light);text-align:right;margin-top:0.1rem">you: ${m.my_score}</div>` : ''}
           ${m.imdb_rating ? `<div class="imdb-small">⭐ ${m.imdb_rating}</div>` : ''}
         </div>
       </div>
