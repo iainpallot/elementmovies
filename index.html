@@ -373,7 +373,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.4</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.5</span>
     </div>
   </div>
 
@@ -580,6 +580,7 @@ const API = "https://script.google.com/macros/s/AKfycbwN5ABiNIn1snW3euBEBQWijW-D
 let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'home', openAttendeesId = null;
 let pendingBooking = null;
 let pendingSeatPicker = null;
+let pendingWaitlist = null;
 let activeGenreFilter = null;
 const TMDB_GENRE_MAP = {28:"Action",12:"Adventure",16:"Animation",35:"Comedy",80:"Crime",99:"Documentary",18:"Drama",10751:"Family",14:"Fantasy",36:"History",27:"Horror",10402:"Music",9648:"Mystery",10749:"Romance",878:"Sci-Fi",53:"Thriller",10752:"War",37:"Western"};
 
@@ -837,7 +838,7 @@ function renderNextScreening() {
   } else if (next.my_waitlist) {
     actionHTML = `<div style="display:flex;align-items:center;gap:0.5rem"><span class="status-pill pill-waitlist">⏳ Waitlist #${next.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="showPage('screenings')" style="font-size:0.75rem;padding:0.25rem 0.6rem">Manage →</button></div>`;
   } else if (seatsLeft === 0) {
-    actionHTML = `<button class="btn btn-secondary btn-sm" onclick="showPage('screenings')">Join Waitlist</button>`;
+    actionHTML = `<button class="btn btn-secondary btn-sm" onclick="pendingWaitlist={id:'${next.screening_id}'};showPage('screenings')">Join Waitlist</button>`;
   } else {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="showPage('screenings')">Book a Seat</button>`;
   }
@@ -1536,6 +1537,14 @@ async function loadScreenings() {
       if (el) { showSeatPicker(id, left, cur); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     }, 80);
   }
+  if (pendingWaitlist) {
+    const { id } = pendingWaitlist;
+    pendingWaitlist = null;
+    setTimeout(() => {
+      const el = document.getElementById(`seat-picker-${id}`);
+      if (el) { showWaitlistPicker(id, false); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    }, 80);
+  }
 }
 
 function screeningCardHTML(s, i) {
@@ -1556,9 +1565,9 @@ function screeningCardHTML(s, i) {
       <button class="btn btn-ghost btn-sm" onclick="showSeatPicker('${s.screening_id}', ${s.seats_left}, ${seats})">Change seats</button>
       <button class="btn btn-danger btn-sm" onclick="cancelBooking('${s.screening_id}')">Cancel booking</button>`;
   } else if (s.my_waitlist) {
-    actionHTML = `<span class="status-pill pill-waitlist">⏳ Waitlist #${s.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Leave</button>`;
+    actionHTML = `<span class="status-pill pill-waitlist">⏳ Waitlist #${s.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="showWaitlistPicker('${s.screening_id}', true)">Change seats</button><button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Leave</button>`;
   } else if (s.seats_left === 0) {
-    actionHTML = `<span class="status-pill pill-full">Full</span><button class="btn btn-secondary btn-sm" onclick="joinWaitlist('${s.screening_id}')">Join Waitlist</button>`;
+    actionHTML = `<span class="status-pill pill-full">Full</span><button class="btn btn-secondary btn-sm" onclick="showWaitlistPicker('${s.screening_id}', false)">Join Waitlist</button>`;
   } else {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="showSeatPicker('${s.screening_id}', ${s.seats_left}, 0)">Book Seats</button>`;
   }
@@ -1689,13 +1698,49 @@ async function doBook(screening_id, seats, addWaitlist, waitlistSeats) {
 }
 
 async function joinWaitlist(screening_id, seats) {
+  const count = seats || 1;
   showLoader('Joining waitlist…');
-  const res = await api('book', { screening_id, seats: seats || 1 });
+  let lastRes;
+  for (let i = 0; i < count; i++) {
+    lastRes = await api('book', { screening_id, seats: 1 });
+    if (!lastRes.ok) { hideLoader(); alert(lastRes.error); return; }
+  }
   hideLoader();
-  if (res.ok) {
-    if (res.status === 'waitlisted') alert(`Added to waitlist at position ${res.position}. You'll be emailed if a seat opens up.`);
-    loadScreenings();
-  } else alert(res.error);
+  if (lastRes.status === 'waitlisted') alert(`Added to waitlist${count > 1 ? ` for ${count} seats` : ''}. You'll be notified if space opens up.`);
+  loadScreenings();
+}
+
+async function changeWaitlist(screening_id, seats) {
+  showLoader('Updating waitlist…');
+  const cancelRes = await api('cancel', { screening_id });
+  if (!cancelRes.ok) { hideLoader(); alert(cancelRes.error); return; }
+  let lastRes;
+  for (let i = 0; i < seats; i++) {
+    lastRes = await api('book', { screening_id, seats: 1 });
+    if (!lastRes.ok) { hideLoader(); alert(lastRes.error); return; }
+  }
+  hideLoader();
+  if (lastRes?.status === 'waitlisted') alert(`Waitlist updated to ${seats} seat${seats > 1 ? 's' : ''}. You'll be notified if space opens up.`);
+  loadScreenings();
+}
+
+function showWaitlistPicker(screening_id, isChange) {
+  const el = document.getElementById(`seat-picker-${screening_id}`);
+  if (!el) return;
+  if (el.style.display !== 'none' && el.dataset.mode === 'waitlist') { el.style.display = 'none'; return; }
+  el.dataset.mode = 'waitlist';
+  el.style.display = 'block';
+  const fn = isChange ? 'changeWaitlist' : 'joinWaitlist';
+  const title = isChange ? 'Change waitlist to:' : 'How many seats on waitlist?';
+  el.innerHTML = `
+    <div class="seat-picker">
+      <div class="seat-picker-title">${title}</div>
+      <div class="seat-picker-actions">
+        <button class="btn btn-secondary btn-sm" onclick="${fn}('${screening_id}',1)">1 seat</button>
+        <button class="btn btn-secondary btn-sm" onclick="${fn}('${screening_id}',2)">2 seats</button>
+        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('seat-picker-${screening_id}').style.display='none'">Cancel</button>
+      </div>
+    </div>`;
 }
 
 async function cancelBooking(screening_id) {
