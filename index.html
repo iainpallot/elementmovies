@@ -326,6 +326,29 @@
   </div>
 </div>
 
+<!-- Waitlist modal -->
+<div class="modal-overlay hidden" id="waitlist-modal">
+  <div class="modal">
+    <h3 id="wl-modal-title">Join Waitlist</h3>
+    <p id="wl-modal-movie" style="font-weight:600;margin-bottom:0.25rem"></p>
+    <div id="wl-modal-step1">
+      <p>How many seats?</p>
+      <div class="modal-actions">
+        <button class="btn btn-secondary btn-sm" style="width:100%" onclick="_wlSelectCount(1)">1 seat</button>
+        <button class="btn btn-secondary btn-sm" style="width:100%" onclick="_wlSelectCount(2)">2 seats</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%" onclick="closeWaitlistModal()">Cancel</button>
+      </div>
+    </div>
+    <div id="wl-modal-step2" style="display:none">
+      <p id="wl-modal-confirm-text"></p>
+      <div class="modal-actions">
+        <button class="btn btn-primary btn-sm" style="width:100%" id="wl-modal-confirm-btn">Confirm</button>
+        <button class="btn btn-ghost btn-sm" style="width:100%" onclick="_wlBack()">← Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- AUTH -->
 <div id="auth-screen">
   <div class="auth-logo">
@@ -373,7 +396,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.5</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.6</span>
     </div>
   </div>
 
@@ -580,7 +603,37 @@ const API = "https://script.google.com/macros/s/AKfycbwN5ABiNIn1snW3euBEBQWijW-D
 let session = null, allMovies = [], allScreenings = [], homeSort = 'score', prevPage = 'home', openAttendeesId = null;
 let pendingBooking = null;
 let pendingSeatPicker = null;
-let pendingWaitlist = null;
+let _wlState = { screening_id: null, isChange: false, count: 0 };
+
+function showWaitlistModal(screening_id, movieTitle, isChange) {
+  _wlState = { screening_id, isChange, count: 0 };
+  document.getElementById('wl-modal-title').textContent = isChange ? 'Change Waitlist Seats' : 'Join Waitlist';
+  document.getElementById('wl-modal-movie').textContent = movieTitle || '';
+  document.getElementById('wl-modal-step1').style.display = '';
+  document.getElementById('wl-modal-step2').style.display = 'none';
+  document.getElementById('waitlist-modal').classList.remove('hidden');
+}
+function _wlSelectCount(n) {
+  _wlState.count = n;
+  const verb = _wlState.isChange ? 'Change to' : 'Join with';
+  document.getElementById('wl-modal-confirm-text').textContent = `${verb} ${n} seat${n>1?'s':''} on the waitlist${_wlState.isChange?' — this replaces your current position':''}`;
+  document.getElementById('wl-modal-confirm-btn').onclick = _wlSubmit;
+  document.getElementById('wl-modal-step1').style.display = 'none';
+  document.getElementById('wl-modal-step2').style.display = '';
+}
+function _wlBack() {
+  document.getElementById('wl-modal-step1').style.display = '';
+  document.getElementById('wl-modal-step2').style.display = 'none';
+}
+function closeWaitlistModal() {
+  document.getElementById('waitlist-modal').classList.add('hidden');
+}
+async function _wlSubmit() {
+  closeWaitlistModal();
+  const { screening_id, isChange, count } = _wlState;
+  if (isChange) await changeWaitlist(screening_id, count);
+  else await joinWaitlist(screening_id, count);
+}
 let activeGenreFilter = null;
 const TMDB_GENRE_MAP = {28:"Action",12:"Adventure",16:"Animation",35:"Comedy",80:"Crime",99:"Documentary",18:"Drama",10751:"Family",14:"Fantasy",36:"History",27:"Horror",10402:"Music",9648:"Mystery",10749:"Romance",878:"Sci-Fi",53:"Thriller",10752:"War",37:"Western"};
 
@@ -838,7 +891,7 @@ function renderNextScreening() {
   } else if (next.my_waitlist) {
     actionHTML = `<div style="display:flex;align-items:center;gap:0.5rem"><span class="status-pill pill-waitlist">⏳ Waitlist #${next.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="showPage('screenings')" style="font-size:0.75rem;padding:0.25rem 0.6rem">Manage →</button></div>`;
   } else if (seatsLeft === 0) {
-    actionHTML = `<button class="btn btn-secondary btn-sm" onclick="pendingWaitlist={id:'${next.screening_id}'};showPage('screenings')">Join Waitlist</button>`;
+    actionHTML = `<button class="btn btn-secondary btn-sm" onclick="showWaitlistModal('${next.screening_id}','${next.movie_title.replace(/'/g,"\\'")}',false)">Join Waitlist</button>`;
   } else {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="showPage('screenings')">Book a Seat</button>`;
   }
@@ -939,7 +992,7 @@ function renderHomeNextScreening() {
   } else if (next.my_waitlist) {
     homeActionHTML = `<span class="status-pill pill-waitlist" style="font-size:0.72rem">⏳ Waitlist #${next.my_waitlist.position}</span>`;
   } else if (next.seats_left === 0) {
-    homeActionHTML = `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();showPage('screenings')" style="margin-top:0.4rem">Join Waitlist</button>`;
+    homeActionHTML = `<button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();showWaitlistModal('${next.screening_id}','${next.movie_title.replace(/'/g,"\\'")}',false)" style="margin-top:0.4rem">Join Waitlist</button>`;
   } else {
     homeActionHTML = `<button class="btn btn-primary btn-sm" onclick="event.stopPropagation();showPage('screenings')" style="margin-top:0.4rem">Book a Seat</button>`;
   }
@@ -1173,7 +1226,8 @@ function renderMyBookingsPanel() {
       </div>`;
     } else if (s.my_waitlist) {
       statusHTML = `<span class="status-pill pill-waitlist" style="font-size:0.76rem">⏳ Waitlist #${s.my_waitlist.position}</span>`;
-      if (!isPast) actionsHTML = `<div style="margin-top:0.5rem">
+      if (!isPast) actionsHTML = `<div style="display:flex;gap:0.4rem;margin-top:0.5rem">
+        <button class="btn btn-ghost btn-sm" onclick="showWaitlistModal('${s.screening_id}','${s.movie_title.replace(/'/g,"\\'")}',true)">Change seats</button>
         <button class="btn btn-ghost btn-sm" onclick="closeMyBookings();cancelBooking('${s.screening_id}')">Leave waitlist</button>
       </div>`;
     }
@@ -1537,14 +1591,6 @@ async function loadScreenings() {
       if (el) { showSeatPicker(id, left, cur); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
     }, 80);
   }
-  if (pendingWaitlist) {
-    const { id } = pendingWaitlist;
-    pendingWaitlist = null;
-    setTimeout(() => {
-      const el = document.getElementById(`seat-picker-${id}`);
-      if (el) { showWaitlistPicker(id, false); el.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-    }, 80);
-  }
 }
 
 function screeningCardHTML(s, i) {
@@ -1565,9 +1611,9 @@ function screeningCardHTML(s, i) {
       <button class="btn btn-ghost btn-sm" onclick="showSeatPicker('${s.screening_id}', ${s.seats_left}, ${seats})">Change seats</button>
       <button class="btn btn-danger btn-sm" onclick="cancelBooking('${s.screening_id}')">Cancel booking</button>`;
   } else if (s.my_waitlist) {
-    actionHTML = `<span class="status-pill pill-waitlist">⏳ Waitlist #${s.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="showWaitlistPicker('${s.screening_id}', true)">Change seats</button><button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Leave</button>`;
+    actionHTML = `<span class="status-pill pill-waitlist">⏳ Waitlist #${s.my_waitlist.position}</span><button class="btn btn-ghost btn-sm" onclick="showWaitlistModal('${s.screening_id}','${s.movie_title.replace(/'/g,"\\'")}',true)">Change seats</button><button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Leave waitlist</button>`;
   } else if (s.seats_left === 0) {
-    actionHTML = `<span class="status-pill pill-full">Full</span><button class="btn btn-secondary btn-sm" onclick="showWaitlistPicker('${s.screening_id}', false)">Join Waitlist</button>`;
+    actionHTML = `<span class="status-pill pill-full">Full</span><button class="btn btn-secondary btn-sm" onclick="showWaitlistModal('${s.screening_id}','${s.movie_title.replace(/'/g,"\\'")}',false)">Join Waitlist</button>`;
   } else {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="showSeatPicker('${s.screening_id}', ${s.seats_left}, 0)">Book Seats</button>`;
   }
@@ -1703,45 +1749,44 @@ async function joinWaitlist(screening_id, seats) {
   let lastRes;
   for (let i = 0; i < count; i++) {
     lastRes = await api('book', { screening_id, seats: 1 });
-    if (!lastRes.ok) { hideLoader(); alert(lastRes.error); return; }
+    if (!lastRes.ok) {
+      hideLoader();
+      if (lastRes.error === 'Already on waitlist') {
+        // Silently refresh — user is already on it
+      } else {
+        alert(lastRes.error);
+      }
+      await _refreshScreeningsData();
+      return;
+    }
   }
   hideLoader();
-  if (lastRes.status === 'waitlisted') alert(`Added to waitlist${count > 1 ? ` for ${count} seats` : ''}. You'll be notified if space opens up.`);
-  loadScreenings();
+  await _refreshScreeningsData();
 }
 
 async function changeWaitlist(screening_id, seats) {
   showLoader('Updating waitlist…');
   const cancelRes = await api('cancel', { screening_id });
-  if (!cancelRes.ok) { hideLoader(); alert(cancelRes.error); return; }
+  if (!cancelRes.ok) { hideLoader(); alert(cancelRes.error); await _refreshScreeningsData(); return; }
   let lastRes;
   for (let i = 0; i < seats; i++) {
     lastRes = await api('book', { screening_id, seats: 1 });
-    if (!lastRes.ok) { hideLoader(); alert(lastRes.error); return; }
+    if (!lastRes.ok) { hideLoader(); alert(lastRes.error); await _refreshScreeningsData(); return; }
   }
   hideLoader();
-  if (lastRes?.status === 'waitlisted') alert(`Waitlist updated to ${seats} seat${seats > 1 ? 's' : ''}. You'll be notified if space opens up.`);
-  loadScreenings();
+  await _refreshScreeningsData();
 }
 
-function showWaitlistPicker(screening_id, isChange) {
-  const el = document.getElementById(`seat-picker-${screening_id}`);
-  if (!el) return;
-  if (el.style.display !== 'none' && el.dataset.mode === 'waitlist') { el.style.display = 'none'; return; }
-  el.dataset.mode = 'waitlist';
-  el.style.display = 'block';
-  const fn = isChange ? 'changeWaitlist' : 'joinWaitlist';
-  const title = isChange ? 'Change waitlist to:' : 'How many seats on waitlist?';
-  el.innerHTML = `
-    <div class="seat-picker">
-      <div class="seat-picker-title">${title}</div>
-      <div class="seat-picker-actions">
-        <button class="btn btn-secondary btn-sm" onclick="${fn}('${screening_id}',1)">1 seat</button>
-        <button class="btn btn-secondary btn-sm" onclick="${fn}('${screening_id}',2)">2 seats</button>
-        <button class="btn btn-ghost btn-sm" onclick="document.getElementById('seat-picker-${screening_id}').style.display='none'">Cancel</button>
-      </div>
-    </div>`;
+async function _refreshScreeningsData() {
+  const res = await api('getScreenings');
+  if (res.ok) {
+    allScreenings = res.screenings;
+    renderNextScreening();
+    renderMyBookingsBlock();
+  }
+  if (document.getElementById('page-screenings')?.style.display !== 'none') loadScreenings();
 }
+
 
 async function cancelBooking(screening_id) {
   if (!confirm('Cancel your booking?\n\nThis will release all your reserved seats. You\'ll need to re-book if you change your mind.')) return;
