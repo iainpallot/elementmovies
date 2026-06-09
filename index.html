@@ -419,7 +419,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.7</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.8</span>
     </div>
   </div>
 
@@ -1067,20 +1067,21 @@ function renderHomeBottomSection(newIds) {
       </div>
       <button class="ack-ok-btn" id="ack-btn-${m.movie_id}"
         onclick="event.stopPropagation();acknowledgeMovie('${m.movie_id}',this)"
-        title="Mark as seen — removes from this list next time">Seen it</button>
+        title="Skip — removes from this list">Skip</button>
     </div>`;
   }).join('');
 
   const unscoredNew = newMovies.filter(m => !m.my_score);
+  _rateNewIds = unscoredNew.map(m => m.movie_id);
   el.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem;margin-top:0.65rem;margin-bottom:1rem">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.1rem">
         <span style="font-size:0.82rem;font-weight:600;color:var(--text)">✨ ${count} New Movie${count!==1?'s':''} to Rate</span>
         <div style="display:flex;gap:0.4rem;flex-shrink:0">
-          ${unscoredNew.length ? `<button onclick="startRateSession(${JSON.stringify(unscoredNew.map(m=>m.movie_id))})" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Rate them →</button>` : ''}
+          ${unscoredNew.length ? `<button onclick="startRateSession(_rateNewIds)" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Rate them →</button>` : ''}
           <button id="ack-all-btn" onclick="acknowledgeAllNewMovies()"
             style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s">
-            Dismiss
+            Skip All
           </button>
         </div>
       </div>
@@ -1310,7 +1311,7 @@ function acknowledgeAllNewMovies() {
   });
   const ackAllBtn = document.getElementById('ack-all-btn');
   if (ackAllBtn) {
-    ackAllBtn.textContent = '✓ Dismissed';
+    ackAllBtn.textContent = '✓ Skipped';
     ackAllBtn.style.color = 'var(--teal-light)';
     ackAllBtn.style.borderColor = 'rgba(27,122,122,0.4)';
   }
@@ -1342,8 +1343,9 @@ function renderHomeMovies() {
 
   const list = document.getElementById('home-movies-list');
   if (!movies.length) { list.innerHTML = '<div class="empty-state"><p>No movies found.</p></div>'; return; }
+  if (activeGenreFilter === '__unscored__') _rateUnscoredIds = movies.map(m => m.movie_id);
   const unscoredCTA = (activeGenreFilter === '__unscored__' && movies.length > 0)
-    ? `<div style="margin-bottom:0.75rem;text-align:right"><button onclick="startRateSession(${JSON.stringify(movies.map(m=>m.movie_id))})" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:8px;padding:0.3rem 0.85rem;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Rate all ${movies.length} →</button></div>`
+    ? `<div style="margin-bottom:0.75rem;text-align:right"><button onclick="startRateSession(_rateUnscoredIds)" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:8px;padding:0.3rem 0.85rem;font-size:0.8rem;font-weight:600;cursor:pointer;font-family:'DM Sans',sans-serif">Rate all ${movies.length} →</button></div>`
     : '';
 
   const ourSvcs = ourServicesCache || [];
@@ -1561,6 +1563,8 @@ function loadDetailSynopsis(movieId, title) { loadSynopsis(`detail-synopsis-${mo
 
 // ── RAPID RATE SESSION ──
 let _rs = { movies: [], idx: 0 };
+let _rateNewIds = [];
+let _rateUnscoredIds = [];
 
 function startRateSession(movieIds) {
   const movies = (Array.isArray(movieIds) ? movieIds : [movieIds])
