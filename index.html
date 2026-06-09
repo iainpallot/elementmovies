@@ -419,7 +419,7 @@
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
       <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.11</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.12</span>
     </div>
   </div>
 
@@ -1045,7 +1045,9 @@ function renderHomeBottomSection(newIds) {
     return;
   }
 
-  const newMovies = newIds.map(id => allMovies.find(m => m.movie_id === id)).filter(Boolean);
+  // Only show movies that haven't been scored yet — scored movies leave this block automatically
+  const newMovies = newIds.map(id => allMovies.find(m => m.movie_id === id)).filter(Boolean).filter(m => !m.my_score);
+  if (!newMovies.length) { el.innerHTML = ''; return; }
   const count = newMovies.length;
 
   const rows = newMovies.map(m => {
@@ -1071,14 +1073,13 @@ function renderHomeBottomSection(newIds) {
     </div>`;
   }).join('');
 
-  const unscoredNew = newMovies.filter(m => !m.my_score);
-  _rateNewIds = unscoredNew.map(m => m.movie_id);
+  _rateNewIds = newMovies.map(m => m.movie_id);
   el.innerHTML = `
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:0.75rem 1rem;margin-top:0.65rem;margin-bottom:1rem">
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.1rem">
         <span style="font-size:0.82rem;font-weight:600;color:var(--text)">✨ ${count} New Movie${count!==1?'s':''} to Rate</span>
         <div style="display:flex;gap:0.4rem;flex-shrink:0">
-          ${unscoredNew.length ? `<button onclick="startRateSession(_rateNewIds)" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Rate them →</button>` : ''}
+          ${count > 1 ? `<button onclick="startRateSession(_rateNewIds)" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Rate them →</button>` : ''}
           <button id="ack-all-btn" onclick="acknowledgeAllNewMovies()"
             style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s">
             Skip All
