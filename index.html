@@ -426,7 +426,7 @@
         <a href="user-guide.html" target="_blank" class="help-icon" title="Member guide" style="width:20px;height:20px;font-size:0.75rem;border-color:rgba(255,255,255,0.25)">?</a>
         <button class="logout-btn" onclick="doLogout()">Sign out</button>
       </div>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.3</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.4</span>
     </div>
   </div>
 
@@ -2401,12 +2401,12 @@ async function adminDoResetPassword() {
   const sel = document.getElementById('resetpw-member');
   const pw = document.getElementById('resetpw-new');
   const msg = document.getElementById('resetpw-msg');
-  if (!sel.value) { msg.textContent = 'Please select a member.'; msg.className = 'msg error'; return; }
-  if (!pw.value.trim() || pw.value.trim().length < 4) { msg.textContent = 'Password must be at least 4 characters.'; msg.className = 'msg error'; return; }
-  msg.textContent = 'Saving…'; msg.className = 'msg';
+  if (!sel.value) { showMsg(msg, 'Please select a member.', 'error'); return; }
+  if (!pw.value.trim() || pw.value.trim().length < 4) { showMsg(msg, 'Password must be at least 4 characters.', 'error'); return; }
+  showMsg(msg, 'Saving…', 'info');
   const res = await api('adminResetPassword', { target_member_id: sel.value, new_password: pw.value.trim() });
-  if (res.ok) { msg.textContent = 'Password reset successfully.'; msg.className = 'msg ok'; pw.value = ''; sel.value = ''; }
-  else { msg.textContent = res.error || 'Failed.'; msg.className = 'msg error'; }
+  if (res.ok) { showMsg(msg, 'Password reset successfully.', 'success'); pw.value = ''; sel.value = ''; }
+  else { showMsg(msg, res.error || 'Failed.', 'error'); }
 }
 
 
