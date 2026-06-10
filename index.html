@@ -157,6 +157,10 @@
   .rs-score-btn.rs-sel { background: var(--teal); border-color: var(--teal); color: white; transform: scale(1.08); }
   .vote-msg { font-size: 0.84rem; color: var(--teal-light); margin-top: 0.5rem; min-height: 1.2em; }
 
+  /* ── Help icon ── */
+  .help-icon { display:inline-flex; align-items:center; justify-content:center; width:15px; height:15px; border-radius:50%; border:1px solid rgba(255,255,255,0.18); color:rgba(255,255,255,0.3); font-size:0.62rem; font-weight:700; text-decoration:none; cursor:pointer; vertical-align:middle; flex-shrink:0; line-height:1; margin-left:0.3rem; transition:all 0.15s; }
+  .help-icon:hover { border-color:var(--teal-light); color:var(--teal-light); }
+
   /* ── Seat picker ── */
   .seat-picker { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; margin-top: 0.75rem; }
   .seat-picker-title { font-size: 0.8rem; color: var(--text-dim); margin-bottom: 0.75rem; }
@@ -418,8 +422,11 @@
       <h1 id="header-page">Home</h1>
     </div>
     <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem">
-      <button class="logout-btn" onclick="doLogout()">Sign out</button>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-09.13</span>
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <a href="user-guide.html" target="_blank" class="help-icon" title="Member guide" style="width:20px;height:20px;font-size:0.75rem;border-color:rgba(255,255,255,0.25)">?</a>
+        <button class="logout-btn" onclick="doLogout()">Sign out</button>
+      </div>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.1</span>
     </div>
   </div>
 
@@ -462,7 +469,10 @@
       <input type="text" class="search-bar" id="home-search" placeholder="🔍  Search movies..." oninput="renderHomeMovies()">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:0.5rem">
         <div class="section-title" style="margin-bottom:0">✦ Movies — tap to view & vote</div>
-        <button onclick="toggleSuggestForm()" id="suggest-toggle-btn" style="background:var(--teal);border:none;color:white;padding:0.3rem 0.7rem;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:0.75rem;cursor:pointer;white-space:nowrap;flex-shrink:0">+ Suggest</button>
+        <div style="display:flex;align-items:center;gap:0.35rem;flex-shrink:0">
+          <button onclick="toggleSuggestForm()" id="suggest-toggle-btn" style="background:var(--teal);border:none;color:white;padding:0.3rem 0.7rem;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:0.75rem;cursor:pointer;white-space:nowrap">+ Suggest</button>
+          <a href="user-guide.html#s3-suggest" target="_blank" class="help-icon" title="How to suggest a movie">?</a>
+        </div>
       </div>
       <div style="font-size:0.7rem;color:var(--text-dim);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:0.4rem">Sort list by</div>
       <div class="sort-bar">
@@ -1079,7 +1089,7 @@ function renderHomeBottomSection(newIds) {
       <div style="display:flex;align-items:center;justify-content:space-between;gap:0.5rem;margin-bottom:0.1rem">
         <span style="font-size:0.82rem;font-weight:600;color:var(--text)">✨ ${count} New Movie${count!==1?'s':''} to Rate</span>
         <div style="display:flex;gap:0.4rem;flex-shrink:0">
-          ${count > 1 ? `<button onclick="startRateSession(_rateNewIds)" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Rate them →</button>` : ''}
+          ${count > 1 ? `<button onclick="startRateSession(_rateNewIds)" style="background:var(--teal-dim);border:1px solid rgba(27,122,122,0.4);color:var(--teal-light);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap">Rate them →</button><a href="user-guide.html#s7" target="_blank" class="help-icon" title="How does rating work?">?</a>` : ''}
           <button id="ack-all-btn" onclick="acknowledgeAllNewMovies()"
             style="background:transparent;border:1px solid var(--border);color:var(--text-dim);border-radius:6px;padding:0.15rem 0.5rem;font-size:0.7rem;cursor:pointer;font-family:'DM Sans',sans-serif;white-space:nowrap;transition:all 0.15s">
             Skip All
@@ -1167,7 +1177,7 @@ function renderGenreFilterBar() {
   if (!genres.length) { el.style.display = 'none'; return; }
   el.style.display = 'block';
   const unscoredActive = activeGenreFilter === '__unscored__';
-  el.innerHTML = `<button class="genre-chip ${!activeGenreFilter?'active':''}" onclick="setGenreFilter(null)">All</button><button class="genre-chip${unscoredActive?' active':''}" onclick="setGenreFilter('__unscored__')" style="${unscoredActive?'':'border-style:dashed'}">Unscored</button>${genres.map(g => `<button class="genre-chip ${activeGenreFilter===g?'active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')"> ${g}</button>`).join('')}`;
+  el.innerHTML = `<button class="genre-chip ${!activeGenreFilter?'active':''}" onclick="setGenreFilter(null)">All</button><button class="genre-chip${unscoredActive?' active':''}" onclick="setGenreFilter('__unscored__')" style="${unscoredActive?'':'border-style:dashed'}">Unscored</button><a href="user-guide.html#s3-unscored" target="_blank" class="help-icon" title="What is Unscored?">?</a>${genres.map(g => `<button class="genre-chip ${activeGenreFilter===g?'active':''}" onclick="setGenreFilter('${g.replace(/'/g,"\\'")}')"> ${g}</button>`).join('')}`;
 }
 
 function setGenreFilter(genre) {
@@ -1451,7 +1461,7 @@ function showDetail(movie_id) {
       ${score>0?`<div class="score-bar"><div class="score-bar-fill" id="detail-bar-${m.movie_id}" style="width:${pct}%"></div></div>`:''}
     </div>
     <div class="vote-block" style="padding:0.75rem;margin-bottom:0.5rem">
-      <div class="section-title" style="margin-bottom:0.3rem">Your Rating</div>
+      <div class="section-title" style="margin-bottom:0.3rem;display:flex;align-items:center">Your Rating<a href="user-guide.html#s4-vote" target="_blank" class="help-icon" title="How voting works">?</a></div>
       <div class="vote-label" style="margin-bottom:0.5rem">${myScore?`You rated this ${myScore}/10 — tap to change`:'Tap a score to rate this movie'}</div>
       <div class="number-vote" id="vote-btns-${m.movie_id}">${voteBtns}</div>
       <div class="vote-msg" id="vote-msg-${m.movie_id}"></div>
@@ -1724,7 +1734,7 @@ function screeningCardHTML(s, i) {
   } else if (s.my_waitlist) {
     actionHTML = `<span class="status-pill pill-waitlist">${waitlistLabel(s.my_waitlist.position)}</span><button class="btn btn-ghost btn-sm" onclick="showWaitlistModal('${s.screening_id}','${s.movie_title.replace(/'/g,"\\'")}',true)">Change seats</button><button class="btn btn-ghost btn-sm" onclick="cancelBooking('${s.screening_id}')">Leave waitlist</button>`;
   } else if (s.seats_left === 0) {
-    actionHTML = `<span class="status-pill pill-full">Full</span><button class="btn btn-secondary btn-sm" onclick="showWaitlistModal('${s.screening_id}','${s.movie_title.replace(/'/g,"\\'")}',false)">Join Waitlist</button>`;
+    actionHTML = `<span class="status-pill pill-full">Full</span><button class="btn btn-secondary btn-sm" onclick="showWaitlistModal('${s.screening_id}','${s.movie_title.replace(/'/g,"\\'")}',false)">Join Waitlist</button><a href="user-guide.html#s5-waitlist" target="_blank" class="help-icon" title="How does the waitlist work?">?</a>`;
   } else {
     actionHTML = `<button class="btn btn-primary btn-sm" onclick="showSeatPicker('${s.screening_id}', ${s.seats_left}, 0)">Book Seats</button>`;
   }
