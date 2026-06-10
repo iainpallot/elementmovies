@@ -426,7 +426,7 @@
         <a href="user-guide.html" target="_blank" class="help-icon" title="Member guide" style="width:20px;height:20px;font-size:0.75rem;border-color:rgba(255,255,255,0.25)">?</a>
         <button class="logout-btn" onclick="doLogout()">Sign out</button>
       </div>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.1</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.2</span>
     </div>
   </div>
 
@@ -2631,7 +2631,7 @@ async function submitScreening() {
   if (screening_id) {
     res = await api('editScreening', { screening_id, movie_id, date, time });
   } else {
-    res = await api('addScreening', { movie_id, date, time, max_seats: 20 });
+    res = await api('addScreening', { movie_id, date, time });
   }
   hideLoader();
 
