@@ -426,7 +426,7 @@
         <a href="user-guide.html" target="_blank" class="help-icon" title="Member guide" style="width:20px;height:20px;font-size:0.75rem;border-color:rgba(255,255,255,0.25)">?</a>
         <button class="logout-btn" onclick="doLogout()">Sign out</button>
       </div>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.2</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.3</span>
     </div>
   </div>
 
@@ -571,6 +571,23 @@
         </div>
         <div class="accordion-body" id="acc-body-members">
           <div id="all-members"><div class="inline-loading"><div class="spinner"></div></div></div>
+        </div>
+      </div>
+
+      <div class="accordion-section" id="acc-resetpw">
+        <div class="accordion-header" onclick="toggleAccordion('resetpw')">
+          <span>Reset Member Password</span><span class="acc-arrow">›</span>
+        </div>
+        <div class="accordion-body" id="acc-body-resetpw">
+          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Set a new password for any member. Useful if a member forgets their password.</div>
+          <div style="display:flex;flex-direction:column;gap:0.6rem;max-width:320px">
+            <select id="resetpw-member" style="padding:0.6rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none">
+              <option value="">— Select member —</option>
+            </select>
+            <input type="text" id="resetpw-new" placeholder="New password (min 4 chars)" style="padding:0.6rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none">
+            <button class="btn btn-primary btn-sm" onclick="adminDoResetPassword()" style="align-self:flex-start">Reset Password</button>
+          </div>
+          <div id="resetpw-msg" class="msg" style="margin-top:0.5rem"></div>
         </div>
       </div>
 
@@ -2058,6 +2075,7 @@ function toggleAccordion(id) {
   // Load content on first open
   if (!isOpen) {
     if (id === 'members') loadMembers();
+    if (id === 'resetpw') loadResetPassword();
     if (id === 'streaming') loadStreamingList();
     if (id === 'ourservices') loadOurServices();
     if (id === 'ownership') loadOwnership();
@@ -2368,6 +2386,28 @@ async function removeMovie(movie_id, title) {
 
 async function approveMember(id) { const r = await api('approveMember',{target_member_id:id}); if(r.ok) loadMembers(); else alert(r.error); }
 async function rejectMember(id) { if(!confirm('Reject?')) return; const r = await api('rejectMember',{target_member_id:id}); if(r.ok) loadMembers(); }
+
+async function loadResetPassword() {
+  const sel = document.getElementById('resetpw-member');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading…</option>';
+  const res = await api('getMembers');
+  if (!res.ok) { sel.innerHTML = '<option value="">Error loading members</option>'; return; }
+  sel.innerHTML = '<option value="">— Select member —</option>' +
+    res.members.map(m => `<option value="${m.member_id}">${m.name} (${m.username})</option>`).join('');
+}
+
+async function adminDoResetPassword() {
+  const sel = document.getElementById('resetpw-member');
+  const pw = document.getElementById('resetpw-new');
+  const msg = document.getElementById('resetpw-msg');
+  if (!sel.value) { msg.textContent = 'Please select a member.'; msg.className = 'msg error'; return; }
+  if (!pw.value.trim() || pw.value.trim().length < 4) { msg.textContent = 'Password must be at least 4 characters.'; msg.className = 'msg error'; return; }
+  msg.textContent = 'Saving…'; msg.className = 'msg';
+  const res = await api('adminResetPassword', { target_member_id: sel.value, new_password: pw.value.trim() });
+  if (res.ok) { msg.textContent = 'Password reset successfully.'; msg.className = 'msg ok'; pw.value = ''; sel.value = ''; }
+  else { msg.textContent = res.error || 'Failed.'; msg.className = 'msg error'; }
+}
 
 
 
