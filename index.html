@@ -273,13 +273,16 @@
   .rating-pill { display: inline-block; font-size: 0.62rem; padding: 0.05rem 0.38rem; border-radius: 4px; border: 1px solid var(--border); color: var(--text-dim); white-space: nowrap; vertical-align: middle; margin-left: 0.3rem; }
   .genre-tag { font-size: 0.68rem; color: var(--teal); background: var(--teal-dim); padding: 0.1rem 0.38rem; border-radius: 3px; white-space: nowrap; display: inline-block; }
 
-  /* ── My Bookings slide-out ── */
+  /* ── Slide-out panels (bookings + admin) ── */
   .bookings-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; backdrop-filter: blur(3px); }
   .bookings-backdrop.open { opacity: 1; pointer-events: all; }
   .bookings-panel { position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100vw); background: var(--surface); border-left: 1px solid var(--border); z-index: 201; transform: translateX(100%); transition: transform 0.32s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; box-shadow: -8px 0 40px rgba(0,0,0,0.4); }
   .bookings-panel.open { transform: translateX(0); }
   .bookings-panel-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.1rem; border-bottom: 1px solid var(--border); flex-shrink: 0; }
   .bookings-panel-header h2 { font-family: 'Playfair Display', serif; font-size: 1.2rem; }
+  .admin-notif { display:flex; align-items:flex-start; gap:0.6rem; padding:0.65rem 0.85rem; border-radius:10px; font-size:0.82rem; margin-bottom:0.4rem; }
+  .admin-notif.info { background:rgba(27,122,122,0.12); border:1px solid rgba(27,122,122,0.3); color:var(--teal-light); }
+  .admin-notif.warn { background:rgba(200,120,0,0.12); border:1px solid rgba(200,120,0,0.35); color:#e8a040; }
   .bookings-close-btn { background: transparent; border: 1px solid var(--border); color: var(--text-dim); width: 32px; height: 32px; border-radius: 8px; font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
   .bookings-close-btn:hover { border-color: var(--danger); color: #e74c3c; }
   .bookings-panel-body { flex: 1; overflow-y: auto; padding: 1rem 1.1rem; }
@@ -426,7 +429,7 @@
         <a href="user-guide.html" target="_blank" class="help-icon" title="Member guide" style="width:20px;height:20px;font-size:0.75rem;border-color:rgba(255,255,255,0.25)">?</a>
         <button class="logout-btn" onclick="doLogout()">Sign out</button>
       </div>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-10.4</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-12.1</span>
     </div>
   </div>
 
@@ -520,19 +523,8 @@
     <!-- ADMIN -->
     <div class="page" id="page-admin">
 
-      <div class="accordion-section" id="acc-invite">
-        <div class="accordion-header" onclick="toggleAccordion('invite')">
-          <span>Invite Code</span><span class="acc-arrow">›</span>
-        </div>
-        <div class="accordion-body" id="acc-body-invite">
-          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Members need this code to register. Change it anytime to stop new registrations.</div>
-          <div style="display:flex;gap:0.6rem;align-items:center">
-            <input type="text" id="invite-code-input" placeholder="Loading…" style="flex:1;padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;letter-spacing:0.05em;outline:none">
-            <button class="btn btn-primary btn-sm" onclick="saveInviteCode()" style="white-space:nowrap">Save</button>
-          </div>
-          <div id="invite-code-msg" class="msg"></div>
-        </div>
-      </div>
+      <!-- Admin notification bar -->
+      <div id="admin-notif-bar" style="margin-bottom:0.6rem"></div>
 
       <div class="accordion-section" id="acc-screenings">
         <div class="accordion-header" onclick="toggleAccordion('screenings')">
@@ -567,61 +559,27 @@
 
       <div class="accordion-section" id="acc-members">
         <div class="accordion-header" onclick="toggleAccordion('members')">
-          <span>All Members</span><span class="acc-arrow">›</span>
+          <span>All Members</span>
+          <div style="display:flex;align-items:center;gap:0.75rem">
+            <button onclick="event.stopPropagation();openInvitePanel()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);padding:0.2rem 0.6rem;border-radius:20px;font-family:'DM Sans',sans-serif;font-size:0.72rem;cursor:pointer;white-space:nowrap">Invite Code</button>
+            <span class="acc-arrow">›</span>
+          </div>
         </div>
         <div class="accordion-body" id="acc-body-members">
           <div id="all-members"><div class="inline-loading"><div class="spinner"></div></div></div>
         </div>
       </div>
 
-      <div class="accordion-section" id="acc-resetpw">
-        <div class="accordion-header" onclick="toggleAccordion('resetpw')">
-          <span>Reset Member Password</span><span class="acc-arrow">›</span>
+      <div class="accordion-section" id="acc-library-mgmt">
+        <div class="accordion-header" onclick="toggleAccordion('library-mgmt')">
+          <span>Library Management</span><span class="acc-arrow">›</span>
         </div>
-        <div class="accordion-body" id="acc-body-resetpw">
-          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Set a new password for any member. Useful if a member forgets their password.</div>
-          <div style="display:flex;flex-direction:column;gap:0.6rem;max-width:320px">
-            <select id="resetpw-member" style="padding:0.6rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none">
-              <option value="">— Select member —</option>
-            </select>
-            <input type="text" id="resetpw-new" placeholder="New password (min 4 chars)" style="padding:0.6rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none">
-            <button class="btn btn-primary btn-sm" onclick="adminDoResetPassword()" style="align-self:flex-start">Reset Password</button>
+        <div class="accordion-body" id="acc-body-library-mgmt">
+          <div style="display:flex;justify-content:flex-end;gap:0.5rem;margin-bottom:0.75rem">
+            <button onclick="openServicesPanel()" class="btn btn-ghost btn-sm">⚙ Streaming Services</button>
+            <button onclick="refreshLibraryStreaming()" class="btn btn-ghost btn-sm">↻ Refresh Streaming</button>
           </div>
-          <div id="resetpw-msg" class="msg" style="margin-top:0.5rem"></div>
-        </div>
-      </div>
-
-      <div class="accordion-section" id="acc-ownership">
-        <div class="accordion-header" onclick="toggleAccordion('ownership')">
-          <span>Movie Ownership</span><span class="acc-arrow">›</span>
-        </div>
-        <div class="accordion-body" id="acc-body-ownership">
-          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Movies you own can be screened at no cost regardless of streaming availability.</div>
-          <div id="ownership-list"><div class="inline-loading"><div class="spinner"></div></div></div>
-        </div>
-      </div>
-
-      <div class="accordion-section" id="acc-ourservices">
-        <div class="accordion-header" onclick="toggleAccordion('ourservices')">
-          <span>Our Streaming Services</span><span class="acc-arrow">›</span>
-        </div>
-        <div class="accordion-body" id="acc-body-ourservices">
-          <div style="font-size:0.8rem;color:var(--text-dim);margin-bottom:0.75rem">Services we currently subscribe to. Movies matching these are flagged as Free to screen.</div>
-          <div id="our-services-list"></div>
-          <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
-            <input type="text" id="new-service-input" placeholder="e.g. Stan, Netflix…" style="flex:1;padding:0.6rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none">
-            <button class="btn btn-primary btn-sm" onclick="addOurService()" style="white-space:nowrap">Add</button>
-          </div>
-          <div id="our-services-msg" class="msg"></div>
-        </div>
-      </div>
-
-      <div class="accordion-section" id="acc-streaming">
-        <div class="accordion-header" onclick="toggleAccordion('streaming')">
-          <span>Streaming Availability</span><span class="acc-arrow">›</span>
-        </div>
-        <div class="accordion-body" id="acc-body-streaming">
-          <div id="streaming-list"><div class="inline-loading"><div class="spinner"></div></div></div>
+          <div id="library-mgmt-list"><div class="inline-loading"><div class="spinner"></div></div></div>
         </div>
       </div>
     </div>
@@ -630,7 +588,7 @@
 
   <nav class="bottom-nav">
     <button class="nav-item active" id="nav-home" onclick="showPage('home')"><span class="nav-icon">🏠</span>Home</button>
-    <button class="nav-item" id="nav-screenings" onclick="showPage('screenings')"><span class="nav-icon">🎟️</span>Screenings</button>
+    <button class="nav-item" id="nav-screenings" onclick="showPage('screenings')" style="position:relative"><span class="nav-icon">🎟️</span>Screenings<span id="screenings-full-dot" style="display:none;position:absolute;top:6px;right:8px;width:8px;height:8px;background:#e8a040;border-radius:50%;border:1.5px solid var(--bg)"></span></button>
     <button class="nav-item" id="nav-library" onclick="showPage('library')"><span class="nav-icon">🎬</span>Library</button>
     <button class="nav-item" id="nav-admin" onclick="showPage('admin')" style="display:none"><span class="nav-icon">⚙️</span>Admin</button>
   </nav>
@@ -645,6 +603,58 @@
   </div>
   <div class="bookings-panel-body" id="bookings-panel-body">
     <div class="inline-loading"><div class="spinner"></div></div>
+  </div>
+</div>
+
+<!-- Invite Code slide-out -->
+<div class="bookings-backdrop" id="invite-backdrop" onclick="closeInvitePanel()"></div>
+<div class="bookings-panel" id="invite-panel">
+  <div class="bookings-panel-header">
+    <h2>Invite Code</h2>
+    <button class="bookings-close-btn" onclick="closeInvitePanel()">✕</button>
+  </div>
+  <div class="bookings-panel-body">
+    <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:1rem">Members need this code to register. Change it anytime to stop new registrations.</div>
+    <div style="display:flex;gap:0.6rem;align-items:center">
+      <input type="text" id="invite-code-input" placeholder="Loading…" style="flex:1;padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.95rem;letter-spacing:0.05em;outline:none">
+      <button class="btn btn-primary btn-sm" onclick="saveInviteCode()" style="white-space:nowrap">Save</button>
+    </div>
+    <div id="invite-code-msg" class="msg" style="margin-top:0.5rem"></div>
+  </div>
+</div>
+
+<!-- Password Reset slide-out -->
+<div class="bookings-backdrop" id="pwreset-backdrop" onclick="closePwResetPanel()"></div>
+<div class="bookings-panel" id="pwreset-panel">
+  <div class="bookings-panel-header">
+    <h2>Reset Password</h2>
+    <button class="bookings-close-btn" onclick="closePwResetPanel()">✕</button>
+  </div>
+  <div class="bookings-panel-body">
+    <div id="pwreset-member-name" style="font-size:0.95rem;font-weight:500;margin-bottom:0.25rem"></div>
+    <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:1rem">Set a new password for this member.</div>
+    <input type="hidden" id="pwreset-member-id">
+    <input type="text" id="pwreset-new" placeholder="New password (min 4 chars)" style="width:100%;box-sizing:border-box;padding:0.65rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none;margin-bottom:0.75rem">
+    <button class="btn btn-primary btn-sm" onclick="adminDoResetPassword()">Reset Password</button>
+    <div id="pwreset-msg" class="msg" style="margin-top:0.5rem"></div>
+  </div>
+</div>
+
+<!-- Streaming Services slide-out -->
+<div class="bookings-backdrop" id="services-backdrop" onclick="closeServicesPanel()"></div>
+<div class="bookings-panel" id="services-panel">
+  <div class="bookings-panel-header">
+    <h2>Streaming Services</h2>
+    <button class="bookings-close-btn" onclick="closeServicesPanel()">✕</button>
+  </div>
+  <div class="bookings-panel-body">
+    <div style="font-size:0.82rem;color:var(--text-dim);margin-bottom:1rem">Services we currently subscribe to. Movies on these services are flagged as free to screen.</div>
+    <div id="our-services-list"></div>
+    <div style="display:flex;gap:0.5rem;margin-top:0.75rem">
+      <input type="text" id="new-service-input" placeholder="e.g. Stan, Netflix…" style="flex:1;padding:0.6rem 0.9rem;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:0.88rem;outline:none">
+      <button class="btn btn-primary btn-sm" onclick="addOurService()" style="white-space:nowrap">Add</button>
+    </div>
+    <div id="our-services-msg" class="msg" style="margin-top:0.5rem"></div>
   </div>
 </div>
 
@@ -795,8 +805,14 @@ async function doChangePassword() {
 }
 
 function doLogout() {
+  // Save current member/movie baselines so next admin login can detect new ones
+  if (session && session.is_admin) {
+    if (allMovies.length) localStorage.setItem('em_knownMovieIds', JSON.stringify(allMovies.map(m => String(m.movie_id))));
+  }
   session = null;
   localStorage.removeItem('em_session');
+  sessionStorage.removeItem('em_newMemberAlert');
+  sessionStorage.removeItem('em_newMovieAlert');
   document.getElementById('app').style.display = 'none';
   document.getElementById('auth-screen').style.display = 'flex';
 }
@@ -805,7 +821,14 @@ function startApp() {
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
   document.getElementById('header-greeting').textContent = `Welcome, ${session.name.split(' ')[0].toUpperCase()}`;
-  if (session.is_admin) document.getElementById('nav-admin').style.display = 'flex';
+  if (session.is_admin) {
+    document.getElementById('nav-admin').style.display = 'flex';
+    // Restore sticky fully-booked dot from prior session
+    if (localStorage.getItem('em_fullyBookedAlert')) {
+      const dot = document.getElementById('screenings-full-dot');
+      if (dot) dot.style.display = 'block';
+    }
+  }
   window.scrollTo(0, 0);
 
   const lastVisit = localStorage.getItem('em_lastVisit');
@@ -2075,12 +2098,8 @@ function toggleAccordion(id) {
   // Load content on first open
   if (!isOpen) {
     if (id === 'members') loadMembers();
-    if (id === 'resetpw') loadResetPassword();
-    if (id === 'streaming') loadStreamingList();
-    if (id === 'ourservices') loadOurServices();
-    if (id === 'ownership') loadOwnership();
+    if (id === 'library-mgmt') loadLibraryManagement();
     if (id === 'screenings') { loadHeadcounts(); loadMoviesForSelect(); }
-    if (id === 'invite') loadInviteCode();
   }
 }
 
@@ -2104,6 +2123,7 @@ function openAddScreening() {
 
 async function loadAdmin() {
   if (!session.is_admin) return;
+  checkAdminNotifications();
   // All sections start closed — loaded on demand
 }
 
@@ -2299,6 +2319,7 @@ async function loadMembers() {
         <div style="font-size:0.75rem;color:var(--text-dim)">${m.username || ''}</div>
       </div>
       <div style="display:flex;align-items:center;gap:0.5rem">
+        <button onclick="openPwResetPanel('${m.member_id}','${m.name}')" style="background:var(--surface2);border:1px solid var(--border);color:var(--text-dim);padding:0.2rem 0.5rem;border-radius:6px;font-family:'DM Sans',sans-serif;font-size:0.72rem;cursor:pointer;white-space:nowrap">P/W reset</button>
         <label style="display:flex;align-items:center;gap:0.4rem;cursor:pointer;font-size:0.75rem;color:var(--text-dim)">
           <div onclick="toggleMemberStatus('${m.member_id}','${m.status}')"
             style="width:36px;height:20px;border-radius:10px;background:${m.status==='active'?'var(--teal)':'var(--surface2)'};border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s">
@@ -2398,18 +2419,222 @@ async function loadResetPassword() {
 }
 
 async function adminDoResetPassword() {
-  const sel = document.getElementById('resetpw-member');
-  const pw = document.getElementById('resetpw-new');
-  const msg = document.getElementById('resetpw-msg');
-  if (!sel.value) { showMsg(msg, 'Please select a member.', 'error'); return; }
+  const memberId = document.getElementById('pwreset-member-id').value;
+  const pw = document.getElementById('pwreset-new');
+  const msg = document.getElementById('pwreset-msg');
+  if (!memberId) { showMsg(msg, 'No member selected.', 'error'); return; }
   if (!pw.value.trim() || pw.value.trim().length < 4) { showMsg(msg, 'Password must be at least 4 characters.', 'error'); return; }
   showMsg(msg, 'Saving…', 'info');
-  const res = await api('adminResetPassword', { target_member_id: sel.value, new_password: pw.value.trim() });
-  if (res.ok) { showMsg(msg, 'Password reset successfully.', 'success'); pw.value = ''; sel.value = ''; }
+  const res = await api('adminResetPassword', { target_member_id: memberId, new_password: pw.value.trim() });
+  if (res.ok) { showMsg(msg, 'Password reset successfully.', 'success'); pw.value = ''; }
   else { showMsg(msg, res.error || 'Failed.', 'error'); }
 }
 
 
+
+// ── Admin slide-out panels ──
+
+function openInvitePanel() {
+  loadInviteCode();
+  document.getElementById('invite-panel').classList.add('open');
+  document.getElementById('invite-backdrop').classList.add('open');
+}
+function closeInvitePanel() {
+  document.getElementById('invite-panel').classList.remove('open');
+  document.getElementById('invite-backdrop').classList.remove('open');
+}
+
+function openPwResetPanel(member_id, name) {
+  document.getElementById('pwreset-member-id').value = member_id;
+  document.getElementById('pwreset-member-name').textContent = name;
+  document.getElementById('pwreset-new').value = '';
+  const msg = document.getElementById('pwreset-msg');
+  msg.style.display = 'none';
+  document.getElementById('pwreset-panel').classList.add('open');
+  document.getElementById('pwreset-backdrop').classList.add('open');
+}
+function closePwResetPanel() {
+  document.getElementById('pwreset-panel').classList.remove('open');
+  document.getElementById('pwreset-backdrop').classList.remove('open');
+}
+
+function openServicesPanel() {
+  loadOurServices();
+  document.getElementById('services-panel').classList.add('open');
+  document.getElementById('services-backdrop').classList.add('open');
+}
+function closeServicesPanel() {
+  document.getElementById('services-panel').classList.remove('open');
+  document.getElementById('services-backdrop').classList.remove('open');
+}
+
+// ── Library Management (combined) ──
+
+let libraryMgmtCache = null;
+
+async function loadLibraryManagement() {
+  const el = document.getElementById('library-mgmt-list');
+  if (!el) return;
+  if (libraryMgmtCache) { renderLibraryManagement(libraryMgmtCache); return; }
+  el.innerHTML = '<div class="inline-loading"><div class="spinner"></div></div>';
+  const res = await api('getMovies');
+  if (!res.ok) { el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to load.</div>'; return; }
+  libraryMgmtCache = res.movies;
+  renderLibraryManagement(libraryMgmtCache);
+}
+
+function renderLibraryManagement(movies) {
+  const el = document.getElementById('library-mgmt-list');
+  if (!el) return;
+  const appleRentPriority = ['Apple TV Store', 'Apple TV', 'iTunes'];
+  el.innerHTML = movies.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
+    const owned = m.we_own === 'TRUE' || m.we_own === true;
+    // Streaming availability summary
+    const val = m.streaming_au || '';
+    let avail = '';
+    if (val.startsWith('Stream: ')) avail = val.replace('Stream: ', '');
+    else if (val.startsWith('Rent/Buy')) {
+      const price = val.match(/A\$\s*([\d.]+)/);
+      avail = price ? `R $${price[1]}` : 'Rent/Buy';
+    } else if (val && val !== 'Not available AU') avail = val;
+    else avail = '<span style="color:var(--text-dim);font-size:0.72rem">N/A</span>';
+
+    return `<div style="display:flex;align-items:center;padding:0.5rem 0;border-bottom:1px solid var(--border);gap:0.5rem">
+      <div style="font-size:0.82rem;font-family:'Playfair Display',serif;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${m.title}</div>
+      <div style="font-size:0.72rem;color:var(--teal-light);flex-shrink:0;max-width:110px;text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${avail}</div>
+      <div onclick="toggleWeOwnLibrary('${m.movie_id}','${m.we_own||'FALSE'}')"
+        style="width:36px;height:20px;border-radius:10px;background:${owned?'var(--teal)':'var(--surface2)'};border:1px solid var(--border);position:relative;cursor:pointer;transition:background 0.2s;flex-shrink:0">
+        <div style="width:16px;height:16px;border-radius:50%;background:white;position:absolute;top:1px;${owned?'right:1px':'left:1px'};transition:all 0.2s"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function toggleWeOwnLibrary(movie_id, currentVal) {
+  const isOwned = currentVal === 'TRUE' || currentVal === true;
+  const res = await api('setWeOwn', { movie_id, we_own: !isOwned });
+  if (res.ok) {
+    const movie = allMovies.find(m => m.movie_id === movie_id);
+    if (movie) movie.we_own = !isOwned ? 'TRUE' : 'FALSE';
+    if (libraryMgmtCache) {
+      const lm = libraryMgmtCache.find(m => m.movie_id === movie_id);
+      if (lm) lm.we_own = !isOwned ? 'TRUE' : 'FALSE';
+    }
+    renderLibraryManagement(libraryMgmtCache || []);
+    if (document.getElementById('page-library').classList.contains('active')) renderHomeMovies();
+  }
+}
+
+async function refreshLibraryStreaming() {
+  const el = document.getElementById('library-mgmt-list');
+  el.innerHTML = '<div class="inline-loading"><div class="spinner"></div> Fetching streaming data…</div>';
+  showLoader('Fetching streaming prices…');
+  const res = await api('getStreamingDetails');
+  if (!res.ok || !res.results) {
+    hideLoader();
+    el.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">Failed to fetch. Try again.</div>';
+    return;
+  }
+  const updates = res.results.map(m => {
+    const appleRentPriority = ['Apple TV Store', 'Apple TV', 'iTunes'];
+    const streaming = [...new Set(m.streaming)];
+    let streaming_au = '';
+    if (streaming.length) streaming_au = 'Stream: ' + streaming.join(', ');
+    else if (m.rent.length) {
+      const r = m.rent.find(r => appleRentPriority.some(n => r.name.includes(n))) || m.rent[0];
+      const p = r?.price ? r.price.replace('A$ ','').replace('AUD ','').trim() : null;
+      streaming_au = p ? `Rent/Buy: A$ ${p}` : 'Rent/Buy only';
+    } else if (m.buy.length) {
+      const b = m.buy.find(b => appleRentPriority.some(n => b.name.includes(n))) || m.buy[0];
+      const p = b?.price ? b.price.replace('A$ ','').replace('AUD ','').trim() : null;
+      streaming_au = p ? `Rent/Buy: A$ ${p}` : 'Rent/Buy only';
+    } else streaming_au = 'Not available AU';
+    return { movie_id: m.movie_id, streaming_au };
+  });
+  showLoader('Saving streaming data…');
+  const saveRes = await api('saveStreamingData', { updates });
+  hideLoader();
+  if (saveRes.ok) {
+    updates.forEach(u => {
+      const m = allMovies.find(x => x.movie_id === u.movie_id);
+      if (m) m.streaming_au = u.streaming_au;
+      if (libraryMgmtCache) { const lm = libraryMgmtCache.find(x => x.movie_id === u.movie_id); if (lm) lm.streaming_au = u.streaming_au; }
+    });
+  }
+  renderLibraryManagement(libraryMgmtCache || []);
+}
+
+// ── Admin Notifications ──
+
+async function checkAdminNotifications() {
+  if (!session || !session.is_admin) return;
+  const bar = document.getElementById('admin-notif-bar');
+  if (!bar) return;
+  let html = '';
+
+  // New members (session-based — cleared on logout/session end)
+  const newMemberAlert = sessionStorage.getItem('em_newMemberAlert');
+  if (newMemberAlert) {
+    const names = JSON.parse(newMemberAlert);
+    if (names.length) html += `<div class="admin-notif info">👤 New member${names.length>1?'s':''} since your last login: <strong>${names.join(', ')}</strong></div>`;
+  } else {
+    // First admin page visit this session — compute new members
+    const knownIds = JSON.parse(localStorage.getItem('em_knownMemberIds') || '[]');
+    if (knownIds.length) {
+      const res = await api('getMembers');
+      if (res.ok) {
+        const newMembers = res.members.filter(m => !knownIds.includes(String(m.member_id)));
+        sessionStorage.setItem('em_newMemberAlert', JSON.stringify(newMembers.map(m => m.name)));
+        if (newMembers.length) html += `<div class="admin-notif info">👤 New member${newMembers.length>1?'s':''} since your last login: <strong>${newMembers.map(m=>m.name).join(', ')}</strong></div>`;
+      }
+    } else {
+      // First ever login — snapshot current members silently
+      const res = await api('getMembers');
+      if (res.ok) {
+        localStorage.setItem('em_knownMemberIds', JSON.stringify(res.members.map(m => String(m.member_id))));
+        sessionStorage.setItem('em_newMemberAlert', '[]');
+      }
+    }
+  }
+
+  // New movies (session-based)
+  const newMovieAlert = sessionStorage.getItem('em_newMovieAlert');
+  if (newMovieAlert) {
+    const titles = JSON.parse(newMovieAlert);
+    if (titles.length) html += `<div class="admin-notif info">🎬 New movie${titles.length>1?'s':''} added since your last login: <strong>${titles.join(', ')}</strong></div>`;
+  } else {
+    const knownMovieIds = JSON.parse(localStorage.getItem('em_knownMovieIds') || '[]');
+    if (knownMovieIds.length && allMovies.length) {
+      const newMovies = allMovies.filter(m => !knownMovieIds.includes(String(m.movie_id)));
+      sessionStorage.setItem('em_newMovieAlert', JSON.stringify(newMovies.map(m => m.title)));
+      if (newMovies.length) html += `<div class="admin-notif info">🎬 New movie${newMovies.length>1?'s':''} added since your last login: <strong>${newMovies.map(m=>m.title).join(', ')}</strong></div>`;
+    } else if (allMovies.length) {
+      localStorage.setItem('em_knownMovieIds', JSON.stringify(allMovies.map(m => String(m.movie_id))));
+      sessionStorage.setItem('em_newMovieAlert', '[]');
+    }
+  }
+
+  // Fully booked screenings — sticky via localStorage
+  checkFullyBookedScreenings();
+
+  bar.innerHTML = html;
+}
+
+function checkFullyBookedScreenings() {
+  if (!session || !session.is_admin) return;
+  const dot = document.getElementById('screenings-full-dot');
+  if (!dot) return;
+  const today = new Date().toISOString().split('T')[0];
+  const fullyBooked = allScreenings.filter(s => s.date >= today && parseInt(s.seats_taken) >= parseInt(s.max_seats));
+  if (fullyBooked.length) {
+    localStorage.setItem('em_fullyBookedAlert', '1');
+    dot.style.display = 'block';
+    dot.title = `${fullyBooked.length} upcoming screening${fullyBooked.length>1?'s are':' is'} fully booked`;
+  } else {
+    localStorage.removeItem('em_fullyBookedAlert');
+    dot.style.display = 'none';
+  }
+}
 
 async function loadHeadcounts() {
   const list = document.getElementById('headcount-list');
@@ -2419,6 +2644,7 @@ async function loadHeadcounts() {
 
   // Keep global in sync so home/screenings pages see fresh data
   allScreenings = res.screenings || [];
+  checkFullyBookedScreenings();
   const screenings = [...allScreenings].sort((a,b) => b.date.localeCompare(a.date));
 
   if (!screenings.length) { list.innerHTML = '<div style="font-size:0.85rem;color:var(--text-dim)">No screenings yet.</div>'; return; }
