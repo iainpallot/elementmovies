@@ -429,7 +429,7 @@
         <a href="user-guide.html" target="_blank" class="help-icon" title="Member guide" style="width:20px;height:20px;font-size:0.75rem;border-color:rgba(255,255,255,0.25)">?</a>
         <button class="logout-btn" onclick="doLogout()">Sign out</button>
       </div>
-      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-12.1</span>
+      <span style="font-size:0.58rem;color:var(--text-dim);opacity:0.5;letter-spacing:0.02em">v2026-06-12.2</span>
     </div>
   </div>
 
@@ -2487,7 +2487,12 @@ function renderLibraryManagement(movies) {
   const el = document.getElementById('library-mgmt-list');
   if (!el) return;
   const appleRentPriority = ['Apple TV Store', 'Apple TV', 'iTunes'];
-  el.innerHTML = movies.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
+  const header = `<div style="display:flex;align-items:center;padding:0.3rem 0 0.4rem;border-bottom:2px solid var(--border);gap:0.5rem;margin-bottom:0.1rem">
+    <div style="font-size:0.72rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;flex:1">Movie</div>
+    <div style="font-size:0.72rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;flex-shrink:0;max-width:110px;text-align:right">Services</div>
+    <div style="font-size:0.72rem;font-weight:600;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.04em;flex-shrink:0;width:36px;text-align:center">Own</div>
+  </div>`;
+  el.innerHTML = header + movies.sort((a,b) => a.title.localeCompare(b.title)).map(m => {
     const owned = m.we_own === 'TRUE' || m.we_own === true;
     // Streaming availability summary
     const val = m.streaming_au || '';
