@@ -1479,7 +1479,7 @@ function showDetail(movie_id) {
         <div class="detail-title">${m.title}</div>
         <div class="detail-actor">${m.lead_actor||''}${m._contentRating?`<span class="rating-pill">${m._contentRating}</span>`:`<span id="detail-rating-badge-${m.movie_id}"></span>`}</div>
         <div class="detail-badges">
-          ${m.imdb_rating?`<a href="${m.imdb_url||'#'}" target="_blank" class="badge badge-imdb" style="text-decoration:none">IMDb ${m.imdb_rating}</a>`:''}
+          ${m.imdb_rating?`<a id="detail-imdb-${m.movie_id}" href="${m.imdb_url||'#'}" target="_blank" class="badge badge-imdb" style="text-decoration:none">IMDb ${m.imdb_rating}</a>`:''}
           ${m.rt_score?`<a href="https://www.rottentomatoes.com/search?search=${encodeURIComponent(m.title)}" target="_blank" class="badge badge-rt" style="text-decoration:none">RT ${formatRT(m.rt_score)}</a>`:''}
         </div>
         ${costPill(isFreeToScreen(m, ourServicesCache||[]))}
@@ -1554,6 +1554,20 @@ async function loadSynopsis(elId, title) {
               try { const rc=JSON.parse(localStorage.getItem('em_rating_cache')||'{}'); rc[movie.movie_id]=cert; localStorage.setItem('em_rating_cache',JSON.stringify(rc)); } catch(e){}
               const badgeEl = document.getElementById(`detail-rating-badge-${movie.movie_id}`);
               if (badgeEl) badgeEl.outerHTML = `<span class="rating-pill">${cert}</span>`;
+            }
+          }).catch(() => {});
+      }
+      // Verify IMDB URL against TMDB external_ids — catches stale/wrong URLs stored in Sheet
+      if (movie && first?.id) {
+        fetch(`https://api.themoviedb.org/3/movie/${first.id}/external_ids?api_key=0e0ec3c6d62df378f31f7ddb78a83b49`)
+          .then(r => r.ok ? r.json() : null)
+          .then(data => {
+            if (!data?.imdb_id) return;
+            const verifiedUrl = `https://www.imdb.com/title/${data.imdb_id}/`;
+            if (verifiedUrl !== movie.imdb_url) {
+              movie.imdb_url = verifiedUrl; // patch in-memory
+              const imdbLink = document.getElementById(`detail-imdb-${movie.movie_id}`);
+              if (imdbLink) imdbLink.href = verifiedUrl;
             }
           }).catch(() => {});
       }
